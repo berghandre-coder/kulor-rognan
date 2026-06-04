@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="no"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Forside - Kulør Rognan (Klar for nedlasting)</title>
+<meta content="Din lokale faghandel på Rognan. Vi hjelper deg med maling, gulv, solskjerming og interiør i Saltdal." name="description"/>
+<!-- Scripts & Fonts -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600&amp;family=Manrope:wght@400;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f5ece5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8b5000;
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6a3c00;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed": "#f1e0cf",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#3a7038",
+                        "surface-container-low": "#fbf2eb",
+                        "on-primary": "#ffffff",
+                        "background": "#fff8f4",
+                        "secondary-fixed": "#b5f2ac",
+                        "inverse-primary": "#ffb871",
+                        "deep-forest": "#1E421E",
+                        "primary-fixed": "#ffdcbe",
+                        "primary": "#8b5000",
+                        "tertiary": "#685c4f",
+                        "on-secondary": "#ffffff",
+                        "vibrant-orange": "#F8971D",
+                        "outline": "#877362",
+                        "surface-dim": "#e1d8d2",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#dac2ae",
+                        "on-surface": "#1f1b17",
+                        "on-error": "#ffffff",
+                        "primary-container": "#f8971d",
+                        "error": "#ba1a1a",
+                        "warm-grey": "#F2EEE9",
+                        "on-primary-container": "#623700",
+                        "on-tertiary-fixed": "#221a10",
+                        "on-secondary-fixed": "#002203",
+                        "surface-container": "#f5ece5",
+                        "surface-variant": "#eae1da",
+                        "inverse-on-surface": "#f8efe8",
+                        "on-primary-fixed-variant": "#6a3c00",
+                        "surface-container-highest": "#eae1da",
+                        "secondary-container": "#b5f2ac",
+                        "inverse-surface": "#34302b",
+                        "tertiary-fixed-dim": "#d4c4b3",
+                        "on-tertiary-container": "#4a4033",
+                        "surface-cream": "#FCFAF7",
+                        "secondary": "#346a33",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#1b511d",
+                        "tertiary-container": "#baab9b",
+                        "surface": "#fff8f4",
+                        "surface-tint": "#8b5000",
+                        "surface-bright": "#fff8f4",
+                        "on-surface-variant": "#544435",
+                        "surface-container-high": "#f0e7df",
+                        "secondary-fixed-dim": "#9ad592",
+                        "primary-fixed-dim": "#ffb871",
+                        "on-background": "#1f1b17",
+                        "on-tertiary-fixed-variant": "#504538",
+                        "on-primary-fixed": "#2d1600"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "section-gap": "80px",
+                        "gutter": "24px",
+                        "unit": "8px",
+                        "margin-desktop": "64px",
+                        "margin-mobile": "20px"
+                    },
+                    fontFamily: {
+                        "label-sm": ["Hanken Grotesk"],
+                        "headline-lg": ["Manrope"],
+                        "label-md": ["Hanken Grotesk"],
+                        "headline-xl-mobile": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "headline-xl": ["Manrope"]
+                    },
+                    fontSize: {
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-xl-mobile": ["36px", { "lineHeight": "42px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800" }]
+                    }
+                }
+            }
+        };
+    </script>
+<style data-stitch-cursor=""></style><style data-stitch-scroll-lock=""></style><style data-stitch-cursor=""></style><style data-stitch-scroll-lock=""></style></head>
+<body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-50 bg-surface-cream shadow-sm shadow-deep-forest/10 w-full transition-all duration-300">
+<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-7xl mx-auto">
+<!-- Brand -->
+<a aria-label="Kulør Rognan Home" class="flex items-center gap-2" href="#">
+<img alt="Kulør Logo" class="h-8 md:h-10 w-auto object-contain" src="img/kulor-logo-400.png"/>
+<span class="sr-only">Kulør Rognan</span>
+</a>
+<!-- Desktop Navigation -->
+<nav aria-label="Main Navigation" class="hidden md:flex items-center gap-6">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 transition-colors font-label-md text-label-md hover:text-primary px-2" href="#">Hjem</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-md text-label-md hover:bg-surface-container rounded-sm px-2 py-1" href="#tjenester">Maling</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-md text-label-md hover:bg-surface-container rounded-sm px-2 py-1" href="#tjenester">Gulv</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-md text-label-md hover:bg-surface-container rounded-sm px-2 py-1" href="#tjenester">Solskjerming</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-md text-label-md hover:bg-surface-container rounded-sm px-2 py-1" href="#tjenester">Tjenester</a>
+</nav>
+<!-- Actions -->
+<div class="hidden md:flex items-center gap-4">
+<a class="text-deep-forest font-label-md text-label-md hover:text-primary transition-colors font-semibold" href="#kontakt">Kontakt oss</a>
+<a class="bg-vibrant-orange hover:bg-primary-container text-white font-label-md text-label-md py-2 px-4 rounded-lg transition-all duration-300 shadow-sm shadow-deep-forest/10 hover:shadow-md active:scale-95 font-semibold" href="#">Bestill befaring</a>
+</div>
+<!-- Mobile Menu Toggle -->
+<button aria-label="Toggle menu" class="md:hidden text-deep-forest p-2 rounded-lg hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+</div>
+</header>
+<main>
+<!-- Hero Section -->
+<section class="relative w-full min-h-[80vh] flex items-center overflow-hidden bg-warm-grey">
+<div class="absolute inset-0 z-0">
+<img alt="Moderne stue med varme fargetoner" class="w-full h-full object-cover" src="img/kolor-bak.jpg"/>
+<div class="absolute inset-0 bg-gradient-to-r from-deep-forest/90 via-deep-forest/70 to-transparent"></div>
+</div>
+<div class="relative z-10 w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">
+<div class="max-w-2xl text-white">
+<span class="inline-block py-1 px-3 rounded-full bg-vibrant-orange/20 text-vibrant-orange font-label-sm text-label-sm mb-6 border border-vibrant-orange/30">Velkommen til Kulør Rognan</span>
+<h1 class="font-headline-xl-mobile md:font-headline-xl text-headline-xl-mobile md:text-headline-xl text-white mb-6 leading-tight drop-shadow-md">
+                    Din lokale faghandel på Rognan
+                </h1>
+<p class="font-body-lg text-body-lg text-surface-cream/90 mb-8 max-w-xl drop-shadow-sm">
+                    Vi hjelper deg med maling, gulv, solskjerming og interiør i Saltdal. Få ekspertråd og produkter av topp kvalitet til ditt neste prosjekt.
+                </p>
+<div class="flex flex-col sm:flex-row gap-4">
+<a class="bg-vibrant-orange hover:bg-primary-container text-white font-label-md text-label-md py-3 px-8 rounded-lg transition-all duration-300 shadow-md shadow-deep-forest/20 text-center flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0" href="#">
+                        Bestill befaring
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+<a class="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white font-label-md text-label-md py-3 px-8 rounded-lg transition-all duration-300 text-center flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0" href="#">
+                        Besøk butikken
+                        <span class="material-symbols-outlined text-[18px]">storefront</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<!-- Services Grid -->
+<section class="w-full py-section-gap bg-surface-cream" id="tjenester">
+<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop">
+<div class="text-center mb-16">
+<h2 class="font-headline-lg text-headline-lg text-deep-forest mb-4">Våre fagområder</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto">
+                    Fra fargevalg til ferdig montert solskjerming. Vi har utvalget og kompetansen du trenger.
+                </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
+<!-- Maling (Large) -->
+<div class="md:col-span-2 md:row-span-2 group relative overflow-hidden rounded-xl bg-warm-grey shadow-sm shadow-deep-forest/5 hover:shadow-md transition-all duration-300">
+<div class="absolute inset-0 z-0">
+<img alt="Maling og fargeprøver" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="img/pensel-fargeprov.jpg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-deep-forest/80 via-deep-forest/20 to-transparent"></div>
+</div>
+<div class="absolute bottom-0 left-0 p-8 z-10 w-full flex flex-col justify-end h-full">
+<div class="bg-surface-cream/90 backdrop-blur-md p-6 rounded-lg border border-white/20 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+<div class="flex items-center gap-3 mb-3">
+<span class="material-symbols-outlined text-vibrant-orange text-[28px]" style="font-variation-settings: 'FILL' 1;">format_paint</span>
+<h3 class="font-headline-md text-headline-md text-deep-forest">Maling og fargeråd</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Finn den perfekte nyansen for ditt hjem med våre eksperter. Vi blander alle farger.</p>
+<a class="inline-flex items-center gap-1 text-primary font-label-md text-label-md hover:text-vibrant-orange transition-colors group/link" href="#">
+                                Les mer <span class="material-symbols-outlined text-[16px] group-hover/link:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Gulv -->
+<div class="group relative overflow-hidden rounded-xl bg-warm-grey shadow-sm shadow-deep-forest/5 hover:shadow-md transition-all duration-300">
+<div class="absolute inset-0 z-0">
+<img alt="Vakkert eikegulv" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="img/gulv.jpg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-deep-forest/80 to-transparent opacity-80"></div>
+</div>
+<div class="absolute bottom-0 left-0 p-6 z-10 w-full">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-vibrant-orange text-[24px]">layers</span>
+<h3 class="font-headline-md text-headline-md text-white text-xl">Gulv og gulvbelegg</h3>
+</div>
+<a class="inline-flex items-center gap-1 text-secondary-fixed font-label-sm text-label-sm hover:text-white transition-colors group/link mt-2" href="#">
+                            Les mer <span class="material-symbols-outlined text-[14px] group-hover/link:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Solskjerming -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-container shadow-sm shadow-deep-forest/5 hover:shadow-md transition-all duration-300 p-6 flex flex-col justify-between border border-outline-variant/30 hover:border-vibrant-orange/50">
+<div>
+<div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm text-primary">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">blinds</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-deep-forest mb-2 text-xl">Solskjerming &amp; screens</h3>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">Skreddersydde løsninger for både innvendig og utvendig bruk.</p>
+</div>
+<a class="inline-flex items-center gap-1 text-primary font-label-sm text-label-sm hover:text-vibrant-orange transition-colors group/link mt-4" href="#">
+                        Les mer <span class="material-symbols-outlined text-[14px] group-hover/link:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+<!-- Tapet -->
+<div class="group relative overflow-hidden rounded-xl bg-warm-grey shadow-sm shadow-deep-forest/5 hover:shadow-md transition-all duration-300">
+<div class="absolute inset-0 z-0">
+<img alt="Stilig tapet" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="img/stol.jpg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-deep-forest/80 to-transparent opacity-80"></div>
+</div>
+<div class="absolute bottom-0 left-0 p-6 z-10 w-full">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-vibrant-orange text-[24px]">wallpaper</span>
+<h3 class="font-headline-md text-headline-md text-white text-xl">Tapet og interiør</h3>
+</div>
+<a class="inline-flex items-center gap-1 text-secondary-fixed font-label-sm text-label-sm hover:text-white transition-colors group/link mt-2" href="#">
+                            Les mer <span class="material-symbols-outlined text-[14px] group-hover/link:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Verktøy -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-container shadow-sm shadow-deep-forest/5 hover:shadow-md transition-all duration-300 p-6 flex flex-col justify-between border border-outline-variant/30 hover:border-vibrant-orange/50">
+<div>
+<div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm text-primary">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">handyman</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-deep-forest mb-2 text-xl">Verktøy &amp; tilbehør</h3>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">Alt du trenger av utstyr for et perfekt resultat hver gang.</p>
+</div>
+<a class="inline-flex items-center gap-1 text-primary font-label-sm text-label-sm hover:text-vibrant-orange transition-colors group/link mt-4" href="#">
+                        Les mer <span class="material-symbols-outlined text-[14px] group-hover/link:translate-x-1 transition-transform">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<!-- Expertise Section -->
+<section class="w-full py-section-gap bg-white relative overflow-hidden">
+<div class="absolute top-0 right-0 w-1/3 h-full bg-surface-container-low rounded-l-full opacity-50 -mr-20"></div>
+<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop relative z-10">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div class="order-2 lg:order-1 relative">
+<div class="relative z-10 rounded-2xl overflow-hidden shadow-lg shadow-deep-forest/10 border-4 border-white">
+<img alt="Fagfolk i butikken" class="w-full h-auto object-cover" src="img/disk-kolor.jpg"/>
+</div>
+<div class="absolute -bottom-6 -right-6 bg-vibrant-orange text-white p-6 rounded-xl shadow-lg z-20 hidden md:block">
+<p class="font-headline-md text-headline-md mb-1 text-3xl">20+</p>
+<p class="font-label-sm text-label-sm uppercase tracking-wider">Års Erfaring</p>
+</div>
+</div>
+<div class="order-1 lg:order-2">
+<span class="inline-flex items-center gap-2 text-primary font-label-md text-label-md uppercase tracking-widest mb-4">
+<span class="w-8 h-px bg-primary"></span> Om Oss
+                    </span>
+<h2 class="font-headline-lg text-headline-lg text-deep-forest mb-6">Ekte butikkfølelse og fagkunnskap</h2>
+<div class="space-y-4 text-on-surface-variant font-body-md text-body-md">
+<p class="">Hos Kulør Rognan er vi mer enn bare en butikk; vi er din lokale samarbeidspartner for alle oppussingsprosjekter. Vi tror på den gode, gammeldagse kundeservicen kombinert med moderne, høykvalitets produkter.</p>
+<p class="">Vårt team av erfarne fagfolk står klare til å gi deg personlig veiledning, enten du skal male en enkelt vegg, bytte gulv i hele huset, eller trenger skreddersydd solskjerming. Vi kjenner de lokale forholdene i Saltdal og vet hva som fungerer best.</p>
+</div>
+<div class="mt-8 grid grid-cols-2 gap-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-vibrant-orange mt-1">verified</span>
+<div>
+<h4 class="font-label-md text-label-md text-deep-forest font-bold">Kvalitetsmerker</h4>
+<p class="font-body-md text-body-md text-sm text-on-surface-variant">Kun det beste for ditt hjem.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-vibrant-orange mt-1">support_agent</span>
+<div>
+<h4 class="font-label-md text-label-md text-deep-forest font-bold">Lokal Ekspertise</h4>
+<p class="font-body-md text-body-md text-sm text-on-surface-variant">Råd tilpasset ditt behov.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SEO / Location Section -->
+<section class="w-full py-16 bg-surface-container border-y border-outline-variant/20">
+<div class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop text-center">
+<span class="material-symbols-outlined text-primary text-[40px] mb-4" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<h2 class="font-headline-md text-headline-md text-deep-forest mb-4">Maling, gulv og solskjerming i Rognan og Saltdal</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                Som din lokale faghandel i Saltdal, er Kulør Rognan stolt av å levere kvalitetsprodukter og håndverkstjenester til hele regionen. Enten du bor sentralt på Rognan eller i omkringliggende områder, er vi ditt naturlige valg for alt innen interiør, eksteriørmaling, gulvlegging og spesialtilpasset solskjerming. Besøk oss for inspirasjon og en hyggelig fagprat.
+            </p>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="w-full py-section-gap bg-deep-forest relative overflow-hidden" id="kontakt">
+<div class="absolute inset-0 bg-gradient-to-br from-deep-forest via-deep-forest to-on-secondary-fixed-variant opacity-80"></div>
+<div class="absolute -right-20 -top-20 w-64 h-64 bg-vibrant-orange/10 rounded-full blur-3xl"></div>
+<div class="absolute -left-20 -bottom-20 w-64 h-64 bg-secondary-fixed/10 rounded-full blur-3xl"></div>
+<div class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop text-center relative z-10">
+<h2 class="font-headline-lg text-headline-lg text-white mb-6">Klar for ditt neste prosjekt?</h2>
+<p class="font-body-lg text-body-lg text-surface-cream/90 mb-10 max-w-2xl mx-auto">
+                La oss hjelpe deg med å realisere drømmene dine. Kontakt oss i dag for et uforpliktende tilbud eller en befaring hjemme hos deg.
+            </p>
+<div class="flex flex-col sm:flex-row justify-center gap-4">
+<a class="bg-vibrant-orange hover:bg-primary-container text-white font-label-md text-label-md py-4 px-8 rounded-lg transition-all duration-300 shadow-lg shadow-black/20 text-center flex items-center justify-center gap-2 hover:-translate-y-1 font-bold" href="#">
+                    Kontakt oss for et uforpliktende tilbud
+                    <span class="material-symbols-outlined text-[20px]">mail</span>
+</a>
+<a class="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-label-md text-label-md py-4 px-8 rounded-lg transition-all duration-300 text-center flex items-center justify-center gap-2" href="tel:+4775690650">Ring oss: 75 69 06 50 <span class="material-symbols-outlined text-[20px]">call</span></a>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full bg-deep-forest text-white">
+<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter">
+<!-- Brand Col -->
+<div class="col-span-1">
+<div class="mb-4">
+<div class="mb-4">
+<img alt="Kulør Logo" class="h-8 md:h-10 w-auto object-contain" src="img/kulor-logo-400.png"/>
+</div>
+</div>
+<p class="font-body-md text-body-md text-surface-cream/80 mb-6">Din lokale ekspert på maling, gulv og solskjerming i Saltdal. Vi leverer kvalitet og fagkunnskap.</p>
+<div class="flex items-center gap-2 text-surface-cream/80">
+<span class="material-symbols-outlined text-[20px] text-vibrant-orange">location_on</span>
+<span class="font-body-md text-body-md">Strandgata 11, 8250 Rognan</span>
+</div>
+</div>
+<!-- Links Cols -->
+<div class="col-span-1 md:col-span-2 grid grid-cols-2 gap-8">
+<div>
+<h3 class="font-label-md text-label-md text-vibrant-orange font-bold mb-4 uppercase tracking-wider">Utforsk</h3>
+<ul class="space-y-3">
+<li class=""><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Maling</a></li>
+<li class=""><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Gulv</a></li>
+<li class=""><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Solskjerming</a></li>
+<li class=""><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Fargekart</a></li>
+<li class=""><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Gavekort</a></li>
+</ul>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-vibrant-orange font-bold mb-4 uppercase tracking-wider">Informasjon</h3>
+<ul class="space-y-3">
+<li class=""><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Om oss</a></li>
+<li class=""><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Kontakt</a></li>
+<li class=""><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Personvern</a></li>
+<li class=""><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Betingelser</a></li>
+</ul>
+</div>
+</div>
+<!-- Opening Hours -->
+<div class="col-span-1 bg-on-secondary-fixed-variant/30 p-6 rounded-xl border border-white/10 h-fit">
+<h3 class="font-label-md text-label-md text-vibrant-orange font-bold mb-4 uppercase tracking-wider">Åpningstider</h3>
+<ul class="space-y-2 mb-6 font-body-md text-body-md text-surface-cream/90">
+<li class="flex justify-between"><span class="">Man - Fre</span> <span class="">09:00 - 17:00</span></li>
+<li class="flex justify-between"><span class="">Lørdag</span> <span class="">10:00 - 14:00</span></li>
+<li class="flex justify-between text-surface-cream/60"><span class="">Søndag</span> <span class="">Stengt</span></li>
+</ul>
+<a class="flex items-center gap-2 text-white hover:text-vibrant-orange transition-colors font-label-md text-label-md font-bold" href="tel:+4775690650"><span class="material-symbols-outlined text-[20px]">call</span> 75 69 06 50</a>
+</div>
+</div>
+<!-- Copyright -->
+<div class="mt-12 pt-8 border-t border-white/10 flex justify-between items-center">
+<p class="font-label-sm text-label-sm text-surface-cream/60">© 2026 Kulør Rognan Fargehandel - Din lokale ekspert i Saltdal</p>
+<p class="font-label-sm text-label-sm text-surface-cream/60">Levert av © 2026 AEMA Digital AS</p>
+</div>
+</div>
+</footer>
+</body></html>
