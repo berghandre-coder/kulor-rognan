@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="no">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ordrebekreftelse (demo) - Kulør Rognan</title>
+<meta content="noindex, nofollow" name="robots"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600&family=Manrope:wght@400;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #f5ece5; }
+    ::-webkit-scrollbar-thumb { background: #8b5000; border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6a3c00; }
+</style>
+<script src="../assets/tailwind-config.js"></script>
+</head>
+<body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<script src="../assets/layout.js"></script>
+<script>KulorLayout.injectShop("");</script>
+
+<main class="max-w-3xl mx-auto px-margin-mobile md:px-margin-desktop py-10 min-h-[60vh]" id="confirmation-root">
+  <div id="no-order" class="hidden text-center py-24">
+    <p class="text-on-surface-variant mb-4">Fant ingen nylig ordre.</p>
+    <a href="index.html" class="text-primary font-semibold hover:text-vibrant-orange">Til forsiden</a>
+  </div>
+</main>
+
+<script>KulorLayout.injectShopFooter();</script>
+<script src="data.js"></script>
+<script>
+(function () {
+  var raw = localStorage.getItem(LAST_ORDER_KEY);
+  if (!raw) {
+    document.getElementById("no-order").classList.remove("hidden");
+    return;
+  }
+  var order = JSON.parse(raw);
+  var root = document.getElementById("confirmation-root");
+  var dateStr = new Date(order.date).toLocaleDateString("nb-NO", { day: "numeric", month: "long", year: "numeric" });
+
+  var linesHTML = order.items.map(function (line) {
+    return '' +
+      '<div class="flex justify-between gap-3 py-3 border-b border-outline-variant/15 last:border-0">' +
+      '  <div class="min-w-0">' +
+      '    <p class="font-semibold text-deep-forest">' + line.qty + '&times; ' + line.productName + '</p>' +
+      '    <p class="text-sm text-on-surface-variant">' + line.size + (line.colorLabel ? " · " + line.colorLabel : "") + '</p>' +
+      '  </div>' +
+      '  <span class="font-semibold text-deep-forest shrink-0">' + formatNOK(line.sizePrice * line.qty) + '</span>' +
+      '</div>';
+  }).join("");
+
+  root.insertAdjacentHTML("afterbegin", '' +
+    '<div class="text-center mb-8">' +
+    '  <div class="w-16 h-16 mx-auto bg-secondary-container/60 rounded-full flex items-center justify-center mb-4 text-secondary">' +
+    '    <span class="material-symbols-outlined text-[32px]">check_circle</span>' +
+    '  </div>' +
+    '  <h1 class="font-headline-lg text-headline-lg text-deep-forest mb-2">Takk for din (demo)bestilling!</h1>' +
+    '  <p class="text-on-surface-variant">Du får beskjed på e-post når malingen er ferdigblandet og klar til henting i butikken.</p>' +
+    '</div>' +
+
+    '<div class="bg-white rounded-xl border border-outline-variant/30 p-6 mb-6">' +
+    '  <div class="flex flex-wrap justify-between gap-4 mb-4 pb-4 border-b border-outline-variant/15">' +
+    '    <div>' +
+    '      <p class="text-xs text-on-surface-variant uppercase tracking-wide">Ordrenummer</p>' +
+    '      <p class="font-bold text-deep-forest">' + order.orderNumber + '</p>' +
+    '    </div>' +
+    '    <div>' +
+    '      <p class="text-xs text-on-surface-variant uppercase tracking-wide">Dato</p>' +
+    '      <p class="font-bold text-deep-forest">' + dateStr + '</p>' +
+    '    </div>' +
+    '    <div>' +
+    '      <p class="text-xs text-on-surface-variant uppercase tracking-wide">Status</p>' +
+    '      <p class="font-bold text-vibrant-orange">Ny ordre</p>' +
+    '    </div>' +
+    '  </div>' +
+    '  <div class="mb-4">' + linesHTML + '</div>' +
+    '  <div class="flex items-center justify-between pt-2">' +
+    '    <span class="font-semibold text-deep-forest">Betalt beløp</span>' +
+    '    <span class="font-bold text-primary text-2xl">' + formatNOK(order.total) + '</span>' +
+    '  </div>' +
+    '</div>' +
+
+    '<div class="bg-surface-container rounded-xl p-6 mb-8">' +
+    '  <h2 class="font-headline-md text-lg text-deep-forest mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary">storefront</span> Hentested</h2>' +
+    '  <p class="text-on-surface-variant">' + STORE_INFO.name + ', ' + STORE_INFO.address + '</p>' +
+    '  <p class="text-on-surface-variant mt-1">Bestilt av: ' + order.customer.name + ' &middot; ' + order.customer.email + ' &middot; ' + order.customer.phone + '</p>' +
+    (order.customer.comment ? '  <p class="text-sm text-on-surface-variant italic mt-2">Kommentar: "' + order.customer.comment + '"</p>' : '') +
+    '</div>' +
+
+    '<div class="flex flex-col sm:flex-row gap-3 justify-center mb-10">' +
+    '  <a href="index.html" class="text-center bg-vibrant-orange hover:bg-primary-container text-white font-semibold py-3 px-6 rounded-lg">Til forsiden</a>' +
+    '  <a href="' + "../admin-demo/index.html" + '" class="text-center border border-deep-forest/30 text-deep-forest font-semibold py-3 px-6 rounded-lg hover:bg-white">Se hvordan butikken behandler ordren &rarr;</a>' +
+    '</div>'
+  );
+})();
+</script>
+</body>
+</html>

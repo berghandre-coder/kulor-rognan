@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="no">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Til betaling (demo) - Kulør Rognan</title>
+<meta content="noindex, nofollow" name="robots"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600&family=Manrope:wght@400;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #f5ece5; }
+    ::-webkit-scrollbar-thumb { background: #8b5000; border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6a3c00; }
+</style>
+<script src="../assets/tailwind-config.js"></script>
+</head>
+<body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<script src="../assets/layout.js"></script>
+<script>KulorLayout.injectShop("");</script>
+
+<main class="max-w-5xl mx-auto px-margin-mobile md:px-margin-desktop py-10 min-h-[50vh]">
+  <h1 class="font-headline-lg text-headline-lg text-deep-forest mb-8">Til betaling</h1>
+
+  <div id="checkout-body" class="grid grid-cols-1 lg:grid-cols-5 gap-10">
+    <form id="checkout-form" class="lg:col-span-3 space-y-5">
+      <div>
+        <label class="block text-sm font-semibold text-deep-forest mb-1">Navn</label>
+        <input required id="cf-name" type="text" class="w-full rounded-lg border border-outline-variant/50 px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Fornavn Etternavn"/>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-semibold text-deep-forest mb-1">E-post</label>
+          <input required id="cf-email" type="email" class="w-full rounded-lg border border-outline-variant/50 px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="navn@epost.no"/>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-deep-forest mb-1">Telefonnummer</label>
+          <input required id="cf-phone" type="tel" class="w-full rounded-lg border border-outline-variant/50 px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="+47 900 00 000"/>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-deep-forest mb-1">Kommentar til ordren (valgfritt)</label>
+        <textarea id="cf-comment" rows="2" class="w-full rounded-lg border border-outline-variant/50 px-4 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="F.eks. ønsket hentetidspunkt"></textarea>
+      </div>
+
+      <label class="flex items-start gap-3 bg-surface-container rounded-lg p-4 cursor-pointer">
+        <input id="cf-confirm" required type="checkbox" class="mt-1 rounded border-outline-variant text-vibrant-orange focus:ring-vibrant-orange"/>
+        <span class="text-sm text-deep-forest">
+          <span class="font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-primary">storefront</span> Jeg bekrefter klikk og hent</span>
+          Jeg henter varene selv hos Kulør Rognan, Strandgata 11, 8250 Rognan. Ingen frakt i denne løsningen.
+        </span>
+      </label>
+
+      <div>
+        <p id="form-error" class="hidden text-error text-sm mb-3"></p>
+        <button type="submit" class="w-full bg-vipps-orange hover:brightness-95 text-white font-bold py-4 rounded-lg transition-all shadow-md flex items-center justify-center gap-2 text-lg">
+          <span class="material-symbols-outlined text-[22px]">bolt</span> Betal med Vipps
+        </button>
+        <p class="text-xs text-on-surface-variant text-center mt-3">Illustrativ betalingsknapp &ndash; demonstrasjon, ingen reell betaling gjennomføres.</p>
+      </div>
+    </form>
+
+    <aside class="lg:col-span-2">
+      <div class="bg-white rounded-xl border border-outline-variant/30 p-6 lg:sticky lg:top-24">
+        <h2 class="font-headline-md text-lg text-deep-forest mb-4">Din ordre</h2>
+        <div id="summary-lines" class="space-y-3 mb-4"></div>
+        <div class="border-t border-outline-variant/20 pt-4 flex items-center justify-between">
+          <span class="font-semibold text-deep-forest">Totalsum</span>
+          <span id="summary-total" class="font-bold text-primary text-xl"></span>
+        </div>
+        <p class="text-xs text-on-surface-variant mt-3 flex items-center gap-1">
+          <span class="material-symbols-outlined text-[16px]">storefront</span> Hentes hos Kulør Rognan, Strandgata 11
+        </p>
+      </div>
+    </aside>
+  </div>
+
+  <div id="empty-checkout" class="hidden text-center py-16 border border-dashed border-outline-variant/50 rounded-xl">
+    <p class="text-on-surface-variant mb-4">Handlekurven din er tom &ndash; du må legge til en vare før du kan gå til betaling.</p>
+    <a href="index.html" class="inline-flex items-center gap-1 text-primary font-semibold hover:text-vibrant-orange">Til forsiden <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+  </div>
+</main>
+
+<!-- Demo-betalingsmodal -->
+<div id="demo-modal" class="hidden fixed inset-0 z-[100] bg-deep-forest/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-md w-full p-8 text-center shadow-xl">
+    <div class="w-14 h-14 mx-auto bg-vipps-orange/10 rounded-full flex items-center justify-center mb-4 text-vipps-orange">
+      <span class="material-symbols-outlined text-[28px]">info</span>
+    </div>
+    <h2 class="font-headline-md text-lg text-deep-forest mb-2">Dette er en demonstrasjon</h2>
+    <p class="text-on-surface-variant text-sm mb-6">Betaling og ordrebehandling aktiveres ved eventuell lansering. Ingen reell betaling blir gjennomført nå.</p>
+    <button id="demo-modal-continue" type="button" class="w-full bg-vibrant-orange hover:bg-primary-container text-white font-bold py-3 rounded-lg transition-all">Fortsett til ordrebekreftelse</button>
+  </div>
+</div>
+
+<script>KulorLayout.injectShopFooter();</script>
+<script src="data.js"></script>
+<script>
+  var cart = getCart();
+  if (!cart.length) {
+    document.getElementById("checkout-body").classList.add("hidden");
+    document.getElementById("empty-checkout").classList.remove("hidden");
+  } else {
+    document.getElementById("summary-lines").innerHTML = cart.map(function (line) {
+      return '' +
+        '<div class="flex justify-between gap-3 text-sm">' +
+        '  <div class="min-w-0">' +
+        '    <p class="font-semibold text-deep-forest truncate">' + line.qty + '&times; ' + line.productName + '</p>' +
+        '    <p class="text-on-surface-variant text-xs">' + line.size + (line.colorLabel ? " · " + line.colorLabel : "") + '</p>' +
+        '  </div>' +
+        '  <span class="font-semibold text-deep-forest shrink-0">' + formatNOK(cartLineTotal(line)) + '</span>' +
+        '</div>';
+    }).join("");
+    document.getElementById("summary-total").textContent = formatNOK(cartTotal(cart));
+  }
+
+  document.getElementById("checkout-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var errorEl = document.getElementById("form-error");
+    var name = document.getElementById("cf-name").value.trim();
+    var email = document.getElementById("cf-email").value.trim();
+    var phone = document.getElementById("cf-phone").value.trim();
+    var confirmed = document.getElementById("cf-confirm").checked;
+    if (!name || !email || !phone || !confirmed) {
+      errorEl.textContent = "Fyll ut navn, e-post og telefon, og bekreft klikk-og-hent, før du betaler.";
+      errorEl.classList.remove("hidden");
+      return;
+    }
+    errorEl.classList.add("hidden");
+    document.getElementById("demo-modal").classList.remove("hidden");
+  });
+
+  document.getElementById("demo-modal-continue").addEventListener("click", function () {
+    var order = {
+      orderNumber: "KR-" + (1000 + Math.floor(Math.random() * 9000)),
+      date: new Date().toISOString(),
+      items: cart,
+      total: cartTotal(cart),
+      customer: {
+        name: document.getElementById("cf-name").value.trim(),
+        email: document.getElementById("cf-email").value.trim(),
+        phone: document.getElementById("cf-phone").value.trim(),
+        comment: document.getElementById("cf-comment").value.trim()
+      },
+      pickup: STORE_INFO.address
+    };
+    localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(order));
+    clearCart();
+    location.href = "bekreftelse.html";
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="no">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Handlekurv (demo) - Kulør Rognan</title>
+<meta content="noindex, nofollow" name="robots"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600&family=Manrope:wght@400;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #f5ece5; }
+    ::-webkit-scrollbar-thumb { background: #8b5000; border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6a3c00; }
+</style>
+<script src="../assets/tailwind-config.js"></script>
+</head>
+<body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<script src="../assets/layout.js"></script>
+<script>KulorLayout.injectShop("");</script>
+
+<main class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-10 min-h-[50vh]">
+  <h1 class="font-headline-lg text-headline-lg text-deep-forest mb-2">Handlekurv</h1>
+  <p class="text-on-surface-variant mb-8 flex items-center gap-2">
+    <span class="material-symbols-outlined text-primary text-[18px]">storefront</span>
+    Hentested: <span class="font-semibold text-deep-forest">Kulør Rognan, Strandgata 11, 8250 Rognan</span>
+  </p>
+
+  <div id="cart-items" class="space-y-4 mb-8"></div>
+
+  <div id="empty-cart" class="hidden text-center py-16 border border-dashed border-outline-variant/50 rounded-xl">
+    <span class="material-symbols-outlined text-outline text-[40px] mb-2">shopping_cart</span>
+    <p class="text-on-surface-variant mb-4">Handlekurven din er tom.</p>
+    <a href="index.html" class="inline-flex items-center gap-1 text-primary font-semibold hover:text-vibrant-orange">Til forsiden <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+  </div>
+
+  <div id="cart-summary" class="bg-white rounded-xl border border-outline-variant/30 p-6">
+    <div class="flex items-center justify-between text-lg mb-1">
+      <span class="font-semibold text-deep-forest">Totalsum</span>
+      <span id="cart-total" class="font-bold text-primary text-2xl"></span>
+    </div>
+    <p class="text-xs text-on-surface-variant mb-5">Ingen frakt &ndash; kun klikk og hent i butikk.</p>
+    <a id="checkout-link" href="checkout.html" class="w-full bg-vibrant-orange hover:bg-primary-container text-white font-bold py-3.5 rounded-lg transition-all shadow-md shadow-deep-forest/10 flex items-center justify-center gap-2">
+      Til betaling <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+    </a>
+    <a href="index.html" class="block text-center mt-3 text-sm text-primary font-semibold hover:text-vibrant-orange">Fortsett å handle</a>
+  </div>
+</main>
+
+<script>KulorLayout.injectShopFooter();</script>
+<script src="data.js"></script>
+<script>
+  function render() {
+    var cart = getCart();
+    var itemsWrap = document.getElementById("cart-items");
+    var emptyWrap = document.getElementById("empty-cart");
+    var summaryWrap = document.getElementById("cart-summary");
+
+    if (!cart.length) {
+      itemsWrap.innerHTML = "";
+      emptyWrap.classList.remove("hidden");
+      summaryWrap.classList.add("hidden");
+      return;
+    }
+    emptyWrap.classList.add("hidden");
+    summaryWrap.classList.remove("hidden");
+
+    var iconColor = { inne: "text-white", ute: "text-white", tilbehor: "text-deep-forest" };
+
+    itemsWrap.innerHTML = cart.map(function (line) {
+      return '' +
+        '<div class="flex gap-4 bg-white rounded-xl border border-outline-variant/30 p-4">' +
+        '  <div class="w-20 h-20 shrink-0 rounded-lg bg-gradient-to-br ' + TINT_GRADIENTS[line.tint] + ' flex items-center justify-center">' +
+        '    <span class="material-symbols-outlined ' + iconColor[line.tint] + ' text-[32px]" style="font-variation-settings:\'FILL\' 1;">' + line.icon + '</span>' +
+        '  </div>' +
+        '  <div class="flex-1 min-w-0">' +
+        '    <div class="flex justify-between gap-2">' +
+        '      <h3 class="font-bold text-deep-forest truncate">' + line.productName + '</h3>' +
+        '      <button data-remove="' + line.lineId + '" class="text-on-surface-variant hover:text-error shrink-0" aria-label="Fjern vare"><span class="material-symbols-outlined text-[20px]">delete</span></button>' +
+        '    </div>' +
+        '    <p class="text-sm text-on-surface-variant">Størrelse: ' + line.size + '</p>' +
+        (line.colorLabel ? '    <p class="text-sm text-on-surface-variant">Farge: ' + line.colorLabel + '</p>' : '') +
+        (line.comment ? '    <p class="text-xs text-on-surface-variant italic mt-1">"' + line.comment + '"</p>' : '') +
+        '    <div class="flex items-center justify-between mt-2">' +
+        '      <div class="inline-flex items-center border border-outline-variant/40 rounded-lg overflow-hidden">' +
+        '        <button data-qty-minus="' + line.lineId + '" class="w-8 h-8 hover:bg-surface-container text-deep-forest font-bold">&minus;</button>' +
+        '        <span class="w-8 text-center text-sm font-semibold">' + line.qty + '</span>' +
+        '        <button data-qty-plus="' + line.lineId + '" class="w-8 h-8 hover:bg-surface-container text-deep-forest font-bold">+</button>' +
+        '      </div>' +
+        '      <span class="font-bold text-primary">' + formatNOK(cartLineTotal(line)) + '</span>' +
+        '    </div>' +
+        '  </div>' +
+        '</div>';
+    }).join("");
+
+    document.getElementById("cart-total").textContent = formatNOK(cartTotal(cart));
+
+    itemsWrap.querySelectorAll("[data-remove]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        removeFromCart(btn.getAttribute("data-remove"));
+        render();
+      });
+    });
+    itemsWrap.querySelectorAll("[data-qty-minus]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-qty-minus");
+        var line = getCart().find(function (l) { return l.lineId === id; });
+        updateCartQty(id, line.qty - 1);
+        render();
+      });
+    });
+    itemsWrap.querySelectorAll("[data-qty-plus]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-qty-plus");
+        var line = getCart().find(function (l) { return l.lineId === id; });
+        updateCartQty(id, line.qty + 1);
+        render();
+      });
+    });
+  }
+
+  render();
+</script>
+</body>
+</html>

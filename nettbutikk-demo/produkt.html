@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="no">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Produkt (demo) - Kulør Rognan</title>
+<meta content="noindex, nofollow" name="robots"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600&family=Manrope:wght@400;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #f5ece5; }
+    ::-webkit-scrollbar-thumb { background: #8b5000; border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6a3c00; }
+</style>
+<script src="../assets/tailwind-config.js"></script>
+</head>
+<body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<script src="../assets/layout.js"></script>
+<script>KulorLayout.injectShop("");</script>
+
+<main class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-10" id="product-root">
+  <p class="text-center text-on-surface-variant py-24" id="not-found" style="display:none;">Fant ikke produktet. <a class="text-primary font-semibold" href="index.html">Tilbake til forsiden</a></p>
+</main>
+
+<script>KulorLayout.injectShopFooter();</script>
+<script src="data.js"></script>
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var product = getProductById(params.get("id"));
+  var root = document.getElementById("product-root");
+
+  if (!product) {
+    document.getElementById("not-found").style.display = "block";
+    return;
+  }
+
+  document.title = product.name + " (demo) - Kulør Rognan";
+
+  var iconColor = product.tint === "tilbehor" ? "text-deep-forest" : "text-white";
+  var gradient = TINT_GRADIENTS[product.tint];
+
+  var sizesHTML = product.sizes.map(function (s, i) {
+    return '' +
+      '<label class="size-option cursor-pointer">' +
+      '  <input class="peer sr-only" type="radio" name="size" value="' + i + '" ' + (i === 0 ? "checked" : "") + '/>' +
+      '  <div class="border-2 border-outline-variant/40 peer-checked:border-vibrant-orange peer-checked:bg-vibrant-orange/10 rounded-lg px-4 py-3 text-center transition-colors">' +
+      '    <div class="font-bold text-deep-forest">' + s.label + '</div>' +
+      '    <div class="text-sm text-on-surface-variant">' + formatNOK(s.price) + '</div>' +
+      '  </div>' +
+      '</label>';
+  }).join("");
+
+  var colorSectionHTML = "";
+  if (product.hasColor) {
+    colorSectionHTML = '' +
+      '<div class="border-t border-outline-variant/20 pt-6 mt-6">' +
+      '  <h2 class="font-headline-md text-lg text-deep-forest mb-1">Velg farge</h2>' +
+      '  <p class="text-sm text-on-surface-variant mb-4">Velg blant populære farger, søk, eller skriv inn fargekode selv.</p>' +
+      '  <input id="color-search" type="text" placeholder="Søk fargenavn eller kode, f.eks. \'grå\' eller S 2002-Y" class="w-full mb-4 rounded-lg border border-outline-variant/50 px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"/>' +
+      '  <div id="color-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 mb-4"></div>' +
+      '  <p id="color-no-match" class="hidden text-sm text-on-surface-variant mb-4">Ingen treff blant de populære fargene. Prøv fritekstfeltet under, eller finn koden hos leverandøren.</p>' +
+      '  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">' +
+      '    <div>' +
+      '      <label class="block text-sm font-semibold text-deep-forest mb-1">Annen fargekode</label>' +
+      '      <input id="color-freetext" type="text" placeholder="F.eks. NCS S 1502-Y eller Butinox-kode" class="w-full rounded-lg border border-outline-variant/50 px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"/>' +
+      '    </div>' +
+      '    <div class="flex items-end">' +
+      '      <a href="' + STORE_INFO.supplierColorUrl + '" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-primary font-semibold text-sm hover:text-vibrant-orange transition-colors">' +
+      '        <span class="material-symbols-outlined text-[18px]">open_in_new</span> Finn farge hos Butinox' +
+      '      </a>' +
+      '    </div>' +
+      '  </div>' +
+      '  <p id="selected-color-summary" class="text-sm font-semibold text-deep-forest mb-2"></p>' +
+      '  <p class="text-xs text-on-surface-variant bg-surface-container rounded-lg p-3">Farger vist på skjerm er kun veiledende og kan avvike fra faktisk farge. Endelig fargematch skjer ved blanding i butikk.</p>' +
+      '</div>';
+  }
+
+  root.innerHTML = '' +
+    '<nav class="text-sm text-on-surface-variant mb-6" aria-label="Brødsmulesti">' +
+    '  <a class="hover:text-primary" href="index.html">Nettbutikk</a> <span class="mx-1">/</span> ' +
+    '  <a class="hover:text-primary" href="kategori.html?type=' + product.category + '">' + CATEGORY_META[product.category].title + '</a> <span class="mx-1">/</span> ' +
+    '  <span class="text-deep-forest font-semibold">' + product.name + '</span>' +
+    '</nav>' +
+    '<div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">' +
+    '  <div>' +
+    '    <div class="aspect-square rounded-2xl bg-gradient-to-br ' + gradient + ' flex items-center justify-center sticky top-24">' +
+    '      <span class="material-symbols-outlined ' + iconColor + ' text-[140px]" style="font-variation-settings:\'FILL\' 1;">' + product.icon + '</span>' +
+    '    </div>' +
+    '  </div>' +
+    '  <div>' +
+    '    <p class="uppercase tracking-wider text-xs font-label-sm text-primary mb-2">' + product.useArea + '</p>' +
+    '    <h1 class="font-headline-lg text-headline-lg text-deep-forest mb-3">' + product.name + '</h1>' +
+    '    <p class="text-on-surface-variant mb-6">' + product.shortDesc + '</p>' +
+
+    '    <div class="mb-6">' +
+    '      <h2 class="font-headline-md text-lg text-deep-forest mb-3">Velg spannstørrelse</h2>' +
+    '      <div id="size-options" class="grid grid-cols-3 gap-3">' + sizesHTML + '</div>' +
+    '    </div>' +
+
+    '    <div class="mb-2">' +
+    '      <h2 class="font-headline-md text-lg text-deep-forest mb-3">Antall</h2>' +
+    '      <div class="inline-flex items-center border border-outline-variant/40 rounded-lg overflow-hidden">' +
+    '        <button type="button" id="qty-minus" class="w-10 h-10 flex items-center justify-center hover:bg-surface-container text-deep-forest text-lg font-bold">&minus;</button>' +
+    '        <span id="qty-value" class="w-12 text-center font-semibold">1</span>' +
+    '        <button type="button" id="qty-plus" class="w-10 h-10 flex items-center justify-center hover:bg-surface-container text-deep-forest text-lg font-bold">+</button>' +
+    '      </div>' +
+    '    </div>' +
+
+    colorSectionHTML +
+
+    '    <div class="mt-6">' +
+    '      <label class="block text-sm font-semibold text-deep-forest mb-1">Kundekommentar (valgfritt)</label>' +
+    '      <textarea id="comment" rows="2" placeholder="F.eks. ønsket dekkevne, spesielle behov o.l." class="w-full rounded-lg border border-outline-variant/50 px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"></textarea>' +
+    '    </div>' +
+
+    '    <div class="mt-8" id="add-to-cart-area">' +
+    '      <div class="flex items-center justify-between mb-3">' +
+    '        <span class="text-on-surface-variant text-sm">Pris for valgt størrelse</span>' +
+    '        <span id="line-total" class="text-2xl font-bold text-primary"></span>' +
+    '      </div>' +
+    '      <button type="button" id="add-to-cart-btn" class="w-full bg-vibrant-orange hover:bg-primary-container text-white font-bold py-3.5 rounded-lg transition-all shadow-md shadow-deep-forest/10 flex items-center justify-center gap-2">' +
+    '        <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span> Legg i handlekurv' +
+    '      </button>' +
+    '      <p id="cart-error" class="hidden text-error text-sm mt-2 text-center"></p>' +
+    '    </div>' +
+    '    <div class="mt-8 hidden bg-secondary-container/40 border border-secondary/30 rounded-xl p-5 text-center" id="added-panel">' +
+    '      <p class="font-bold text-deep-forest mb-3 flex items-center justify-center gap-2"><span class="material-symbols-outlined text-secondary">check_circle</span> Lagt i handlekurven</p>' +
+    '      <div class="flex flex-col sm:flex-row gap-3 justify-center">' +
+    '        <a href="handlekurv.html" class="bg-deep-forest hover:bg-deep-forest/90 text-white font-semibold py-2.5 px-5 rounded-lg">Gå til handlekurv</a>' +
+    '        <button type="button" id="continue-shopping" class="border border-deep-forest/30 text-deep-forest font-semibold py-2.5 px-5 rounded-lg hover:bg-white/50">Fortsett å handle</button>' +
+    '      </div>' +
+    '    </div>' +
+    '  </div>' +
+    '</div>' +
+    '<div id="related-wrap" class="mt-section-gap"></div>';
+
+  // ---- Size selection ----
+  function selectedSize() {
+    var idx = parseInt(root.querySelector('input[name="size"]:checked').value, 10);
+    return product.sizes[idx];
+  }
+  function updateLineTotal() {
+    var total = selectedSize().price * qty;
+    document.getElementById("line-total").textContent = formatNOK(total);
+  }
+  root.querySelectorAll('input[name="size"]').forEach(function (input) {
+    input.addEventListener("change", updateLineTotal);
+  });
+
+  // ---- Quantity ----
+  var qty = 1;
+  var qtyValueEl = document.getElementById("qty-value");
+  document.getElementById("qty-minus").addEventListener("click", function () {
+    qty = Math.max(1, qty - 1);
+    qtyValueEl.textContent = qty;
+    updateLineTotal();
+  });
+  document.getElementById("qty-plus").addEventListener("click", function () {
+    qty = qty + 1;
+    qtyValueEl.textContent = qty;
+    updateLineTotal();
+  });
+
+  // ---- Colors ----
+  var selectedColorId = null;
+  var preselect = params.get("farge");
+
+  function renderColorGrid(filterText) {
+    var grid = document.getElementById("color-grid");
+    if (!grid) return;
+    var list = COLORS.filter(function (c) {
+      if (!filterText) return true;
+      var q = filterText.toLowerCase();
+      return c.name.toLowerCase().indexOf(q) !== -1 || c.code.toLowerCase().indexOf(q) !== -1;
+    });
+    document.getElementById("color-no-match").classList.toggle("hidden", list.length > 0);
+    grid.innerHTML = list.map(function (c) {
+      var isSelected = c.id === selectedColorId;
+      return '' +
+        '<button type="button" data-color="' + c.id + '" class="text-center group">' +
+        '  <span class="block w-full aspect-square rounded-lg border-2 ' + (isSelected ? "border-vibrant-orange ring-2 ring-vibrant-orange/40" : "border-outline-variant/40") + ' transition-all" style="background-color:' + c.hex + '"></span>' +
+        '  <span class="block mt-1 text-[11px] font-semibold text-deep-forest leading-tight">' + c.name + '</span>' +
+        '  <span class="block text-[10px] text-on-surface-variant">' + c.code + '</span>' +
+        '</button>';
+    }).join("");
+    grid.querySelectorAll("button").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        selectedColorId = btn.getAttribute("data-color");
+        document.getElementById("color-freetext").value = "";
+        renderColorGrid(document.getElementById("color-search").value);
+        updateColorSummary();
+      });
+    });
+  }
+
+  function updateColorSummary() {
+    var summary = document.getElementById("selected-color-summary");
+    if (!summary) return;
+    var freetext = document.getElementById("color-freetext").value.trim();
+    if (freetext) {
+      summary.textContent = "Valgt fargekode: " + freetext;
+    } else if (selectedColorId) {
+      var c = COLORS.find(function (x) { return x.id === selectedColorId; });
+      summary.textContent = "Valgt farge: " + c.name + " (" + c.code + ")";
+    } else {
+      summary.textContent = "Ingen farge valgt ennå.";
+    }
+  }
+
+  if (product.hasColor) {
+    if (preselect && COLORS.some(function (c) { return c.id === preselect; })) {
+      selectedColorId = preselect;
+    }
+    renderColorGrid("");
+    updateColorSummary();
+    document.getElementById("color-search").addEventListener("input", function (e) {
+      renderColorGrid(e.target.value);
+    });
+    document.getElementById("color-freetext").addEventListener("input", function (e) {
+      if (e.target.value.trim()) {
+        selectedColorId = null;
+        renderColorGrid(document.getElementById("color-search").value);
+      }
+      updateColorSummary();
+    });
+  }
+
+  // ---- Add to cart ----
+  updateLineTotal();
+  document.getElementById("add-to-cart-btn").addEventListener("click", function () {
+    var errorEl = document.getElementById("cart-error");
+    var freetext = product.hasColor ? document.getElementById("color-freetext").value.trim() : "";
+    if (product.hasColor && !selectedColorId && !freetext) {
+      errorEl.textContent = "Velg en farge, eller skriv inn en fargekode.";
+      errorEl.classList.remove("hidden");
+      return;
+    }
+    errorEl.classList.add("hidden");
+
+    var colorLabel = null;
+    if (product.hasColor) {
+      if (freetext) {
+        colorLabel = "Fargekode (kunde): " + freetext;
+      } else {
+        var c = COLORS.find(function (x) { return x.id === selectedColorId; });
+        colorLabel = c.name + " (" + c.code + ")";
+      }
+    }
+
+    var size = selectedSize();
+    addToCart({
+      lineId: "line-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
+      productId: product.id,
+      productName: product.name,
+      icon: product.icon,
+      tint: product.tint,
+      size: size.label,
+      sizePrice: size.price,
+      qty: qty,
+      colorLabel: colorLabel,
+      comment: document.getElementById("comment").value.trim()
+    });
+
+    document.getElementById("add-to-cart-area").classList.add("hidden");
+    document.getElementById("added-panel").classList.remove("hidden");
+  });
+
+  document.getElementById("continue-shopping").addEventListener("click", function () {
+    document.getElementById("added-panel").classList.add("hidden");
+    document.getElementById("add-to-cart-area").classList.remove("hidden");
+    qty = 1;
+    qtyValueEl.textContent = qty;
+    updateLineTotal();
+  });
+
+  // ---- Related products ----
+  var related = PRODUCTS.filter(function (p) { return p.category === product.category && p.id !== product.id; }).slice(0, 3);
+  if (related.length) {
+    document.getElementById("related-wrap").innerHTML = '' +
+      '<h2 class="font-headline-lg text-headline-lg text-deep-forest mb-6">Du ser kanskje også etter</h2>' +
+      '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">' + related.map(productCardHTML).join("") + '</div>';
+  }
+})();
+</script>
+</body>
+</html>
