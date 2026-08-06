@@ -1,79 +1,148 @@
 /*
- * Delt header/footer for nettbutikk-demo og admin-demo.
+ * Delt header/footer for hele Kulør Rognan-nettstedet, inkludert nettbutikk-demoen.
+ * Header/footer-markup er identisk med index.html sin egen header/footer -
+ * nettbutikksider legger kun til et handlekurv-ikon. admin-demo bruker en
+ * egen, separat header (injectAdmin) og er ikke del av dette.
+ *
  * Kjøres synkront (ikke defer) slik at header/footer er på plass før siden vises.
  */
 (function () {
-    var ROOT = "../";
+    function navLink(href, label, isActive, extra) {
+        var cls = isActive
+            ? "text-primary font-bold border-b-2 border-primary pb-1 transition-colors font-label-md text-label-md hover:text-primary px-2"
+            : "text-on-surface-variant font-medium hover:text-primary transition-colors font-label-md text-label-md hover:bg-surface-container rounded-sm px-2 py-1";
+        return '<a class="' + cls + (extra || "") + '" href="' + href + '">' + label + "</a>";
+    }
 
-    function shopHeader(active) {
-        function link(href, label, key) {
-            var isActive = active === key;
-            var cls = isActive
-                ? "text-primary font-bold border-b-2 border-primary pb-1"
-                : "text-on-surface-variant font-medium hover:text-primary";
-            return '<a class="' + cls + ' transition-colors font-label-md text-label-md px-2" href="' + href + '">' + label + "</a>";
+    function siteHeaderHTML(root, active, showCart) {
+        var home = root === "" ? "#" : root + "index.html";
+        var tjenester = root === "" ? "#tjenester" : root + "index.html#tjenester";
+        var kontakt = root === "" ? "#kontakt" : root + "index.html#kontakt";
+        var nettbutikk = root + "nettbutikk-demo/";
+
+        var cartHTML = "";
+        if (showCart) {
+            cartHTML = '' +
+                '<a aria-label="Handlekurv" class="relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-surface-container text-deep-forest transition-colors" href="' + root + 'nettbutikk-demo/handlekurv.html">' +
+                '  <span class="material-symbols-outlined text-[22px]">shopping_cart</span>' +
+                '  <span class="hidden inline-flex absolute -top-1 -right-1 bg-vibrant-orange text-white rounded-full min-w-[18px] h-[18px] px-1 items-center justify-center text-[10px] font-bold" data-cart-count></span>' +
+                '</a>';
         }
+
         return '' +
-            '<div class="w-full bg-deep-forest text-surface-cream text-center py-2 px-4 text-xs md:text-sm font-medium">' +
-            '  <span class="material-symbols-outlined align-middle text-[16px] mr-1">visibility</span>' +
-            '  Demo-visning &ndash; dette er ikke en live nettbutikk. Ingen ordre blir reelt behandlet eller belastet.' +
+            '<header class="sticky top-0 z-50 bg-surface-cream shadow-sm shadow-deep-forest/10 w-full transition-all duration-300">' +
+            '<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-7xl mx-auto">' +
+            '<a aria-label="Kulør Rognan Home" class="flex items-center gap-2" href="' + home + '">' +
+            '<img alt="Kulør Logo" class="h-8 md:h-10 w-auto object-contain" src="' + root + 'img/kulor-logo-400.png"/>' +
+            '<span class="sr-only">Kulør Rognan</span>' +
+            '</a>' +
+            '<nav aria-label="Main Navigation" class="hidden md:flex items-center gap-6">' +
+            navLink(home, "Hjem", active === "hjem") +
+            navLink(tjenester, "Maling", false) +
+            navLink(tjenester, "Gulv", false) +
+            navLink(tjenester, "Solskjerming", false) +
+            navLink(tjenester, "Tjenester", false) +
+            navLink(nettbutikk, 'Nettbutikk <span class="text-[10px] bg-vibrant-orange/15 text-vibrant-orange px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wide">Nytt</span>', active === "nettbutikk", " flex items-center gap-1.5") +
+            '</nav>' +
+            '<div class="hidden md:flex items-center gap-4">' +
+            '<a class="text-deep-forest font-label-md text-label-md hover:text-primary transition-colors font-semibold" href="' + kontakt + '">Kontakt oss</a>' +
+            '<a class="bg-vibrant-orange hover:bg-primary-container text-white font-label-md text-label-md py-2 px-4 rounded-lg transition-all duration-300 shadow-sm shadow-deep-forest/10 hover:shadow-md active:scale-95 font-semibold" href="#">Bestill befaring</a>' +
             '</div>' +
-            '<header class="sticky top-0 z-50 bg-surface-cream shadow-sm shadow-deep-forest/10 w-full">' +
-            '  <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-7xl mx-auto">' +
-            '    <a class="flex items-center gap-2" href="index.html">' +
-            '      <img alt="Kulør Logo" class="h-8 md:h-10 w-auto object-contain" src="' + ROOT + 'img/kulor-logo-400.png"/>' +
-            '      <span class="hidden sm:inline-block ml-1 py-0.5 px-2 rounded-full bg-vibrant-orange/15 text-vibrant-orange font-label-sm text-label-sm border border-vibrant-orange/30">Nettbutikk demo</span>' +
-            '    </a>' +
-            '    <nav aria-label="Nettbutikk navigasjon" class="hidden md:flex items-center gap-6">' +
-            link("index.html", "Hjem", "hjem") +
-            link("kategori.html?type=inne", "Maling inne", "inne") +
-            link("kategori.html?type=ute", "Maling ute", "ute") +
-            link("kategori.html?type=tilbehor", "Tilbehør", "tilbehor") +
-            '    </nav>' +
-            '    <div class="flex items-center gap-3 md:gap-4">' +
-            '      <a class="hidden md:inline text-on-surface-variant hover:text-primary text-label-md font-label-md" href="' + ROOT + 'index.html">Til kulor-rognan.no</a>' +
-            '      <a class="relative flex items-center gap-2 bg-vibrant-orange hover:bg-primary-container text-white py-2 px-3 md:px-4 rounded-lg transition-all font-label-md text-label-md font-semibold" href="handlekurv.html">' +
-            '        <span class="material-symbols-outlined text-[20px]">shopping_cart</span>' +
-            '        <span class="hidden sm:inline">Handlekurv</span>' +
-            '        <span class="hidden inline-flex ml-0.5 bg-white text-vibrant-orange rounded-full w-5 h-5 items-center justify-center text-xs font-bold" data-cart-count></span>' +
-            '      </a>' +
-            '      <button aria-label="Åpne meny" class="md:hidden text-deep-forest p-2 rounded-lg hover:bg-surface-container" data-mobile-nav-toggle type="button">' +
-            '        <span class="material-symbols-outlined text-[24px]">menu</span>' +
-            '      </button>' +
-            '    </div>' +
-            '  </div>' +
-            '  <nav aria-label="Mobilmeny" class="hidden flex-col px-margin-mobile pb-4 gap-1 bg-surface-cream md:hidden" data-mobile-nav>' +
-            link("index.html", "Hjem", "hjem") +
-            link("kategori.html?type=inne", "Maling inne", "inne") +
-            link("kategori.html?type=ute", "Maling ute", "ute") +
-            link("kategori.html?type=tilbehor", "Tilbehør", "tilbehor") +
-            '  </nav>' +
+            '<div class="flex items-center gap-1">' +
+            cartHTML +
+            '<button aria-label="Toggle menu" class="md:hidden text-deep-forest p-2 rounded-lg hover:bg-surface-container transition-colors">' +
+            '<span class="material-symbols-outlined text-[24px]">menu</span>' +
+            '</button>' +
+            '</div>' +
+            '</div>' +
             '</header>';
     }
 
-    function shopFooter() {
+    function siteFooterHTML(root) {
         return '' +
-            '<footer class="w-full bg-deep-forest text-white mt-section-gap">' +
-            '  <div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-12">' +
-            '    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">' +
-            '      <div class="flex items-center gap-3">' +
-            '        <img alt="Kulør Logo" class="h-8 w-auto object-contain" src="' + ROOT + 'img/kulor-logo-400.png"/>' +
-            '        <div>' +
-            '          <p class="font-label-md text-label-md text-white">Kulør Rognan &ndash; Nettbutikk (demo)</p>' +
-            '          <p class="text-surface-cream/60 text-xs">Strandgata 11, 8250 Rognan</p>' +
-            '        </div>' +
-            '      </div>' +
-            '      <p class="text-surface-cream/70 text-sm max-w-md">Dette er en demonstrasjon utviklet for å vise en mulig klikk-og-hent-løsning. Ingen produkter, priser eller ordre er reelle.</p>' +
-            '    </div>' +
-            '    <div class="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-surface-cream/60">' +
-            '      <p>&copy; 2026 Kulør Rognan &ndash; salgsdemo, ikke i produksjon</p>' +
-            '      <a class="hover:text-white transition-colors flex items-center gap-1" href="' + ROOT + 'admin-demo/index.html">Se administrasjonsdemo <span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>' +
-            '    </div>' +
-            '  </div>' +
+            '<footer class="w-full bg-deep-forest text-white">' +
+            '<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">' +
+            '<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter">' +
+            '<div class="col-span-1">' +
+            '<div class="mb-4"><div class="mb-4"><img alt="Kulør Logo" class="h-8 md:h-10 w-auto object-contain" src="' + root + 'img/kulor-logo-400.png"/></div></div>' +
+            '<p class="font-body-md text-body-md text-surface-cream/80 mb-6">Din lokale ekspert på maling, gulv og solskjerming i Saltdal. Vi leverer kvalitet og fagkunnskap.</p>' +
+            '<div class="flex items-center gap-2 text-surface-cream/80">' +
+            '<span class="material-symbols-outlined text-[20px] text-vibrant-orange">location_on</span>' +
+            '<span class="font-body-md text-body-md">Strandgata 11, 8250 Rognan</span>' +
+            '</div>' +
+            '</div>' +
+            '<div class="col-span-1 md:col-span-2 grid grid-cols-2 gap-8">' +
+            '<div>' +
+            '<h3 class="font-label-md text-label-md text-vibrant-orange font-bold mb-4 uppercase tracking-wider">Utforsk</h3>' +
+            '<ul class="space-y-3">' +
+            '<li><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Maling</a></li>' +
+            '<li><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Gulv</a></li>' +
+            '<li><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Solskjerming</a></li>' +
+            '<li><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Fargekart</a></li>' +
+            '<li><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Gavekort</a></li>' +
+            '</ul>' +
+            '</div>' +
+            '<div>' +
+            '<h3 class="font-label-md text-label-md text-vibrant-orange font-bold mb-4 uppercase tracking-wider">Informasjon</h3>' +
+            '<ul class="space-y-3">' +
+            '<li><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Om oss</a></li>' +
+            '<li><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Kontakt</a></li>' +
+            '<li><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Personvern</a></li>' +
+            '<li><a class="text-surface-cream/80 font-normal hover:text-white transition-colors font-body-md text-body-md" href="#">Betingelser</a></li>' +
+            '</ul>' +
+            '</div>' +
+            '</div>' +
+            '<div class="col-span-1 bg-on-secondary-fixed-variant/30 p-6 rounded-xl border border-white/10 h-fit">' +
+            '<h3 class="font-label-md text-label-md text-vibrant-orange font-bold mb-4 uppercase tracking-wider">Åpningstider</h3>' +
+            '<ul class="space-y-2 mb-6 font-body-md text-body-md text-surface-cream/90">' +
+            '<li class="flex justify-between"><span>Man - Fre</span> <span>09:00 - 17:00</span></li>' +
+            '<li class="flex justify-between"><span>Lørdag</span> <span>10:00 - 14:00</span></li>' +
+            '<li class="flex justify-between text-surface-cream/60"><span>Søndag</span> <span>Stengt</span></li>' +
+            '</ul>' +
+            '<a class="flex items-center gap-2 text-white hover:text-vibrant-orange transition-colors font-label-md text-label-md font-bold" href="tel:+4775690650"><span class="material-symbols-outlined text-[20px]">call</span> 75 69 06 50</a>' +
+            '</div>' +
+            '</div>' +
+            '<div class="mt-12 pt-8 border-t border-white/10 flex justify-between items-center">' +
+            '<p class="font-label-sm text-label-sm text-surface-cream/60">© 2026 Kulør Rognan Fargehandel - Din lokale ekspert i Saltdal</p>' +
+            '<p class="font-label-sm text-label-sm text-surface-cream/60">Levert av © 2026 AEMA Digital AS</p>' +
+            '</div>' +
+            '</div>' +
             '</footer>';
     }
 
-    function adminHeader() {
+    function demoBannerHTML() {
+        return '' +
+            '<div class="w-full bg-deep-forest text-surface-cream text-center py-2 px-4 text-xs md:text-sm font-medium">' +
+            '<span class="material-symbols-outlined align-middle text-[16px] mr-1">visibility</span>' +
+            'Demo-visning &ndash; dette er ikke en live nettbutikk. Ingen ordre blir reelt behandlet eller belastet.' +
+            '</div>';
+    }
+
+    var STORE_NAV_ITEMS = [
+        { key: "oversikt", label: "Oversikt", path: "nettbutikk-demo/index.html" },
+        { key: "inne", label: "Innemaling", path: "nettbutikk-demo/kategori.html?type=inne" },
+        { key: "ute", label: "Utemaling", path: "nettbutikk-demo/kategori.html?type=ute" },
+        { key: "tilbehor", label: "Tilbehør", path: "nettbutikk-demo/kategori.html?type=tilbehor" }
+    ];
+
+    function storeNavHTML(root, activeKey) {
+        var links = STORE_NAV_ITEMS.map(function (item) {
+            var isActive = item.key === activeKey;
+            var cls = isActive
+                ? "bg-white text-primary shadow-sm font-semibold"
+                : "text-on-surface-variant hover:text-primary hover:bg-white/60";
+            return '<a class="shrink-0 px-3 py-1.5 rounded-full text-sm transition-colors ' + cls + '" href="' + root + item.path + '">' + item.label + "</a>";
+        }).join("");
+        return '' +
+            '<div class="w-full bg-surface-container border-b border-outline-variant/20">' +
+            '<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop flex items-center gap-2 overflow-x-auto py-2.5">' +
+            '<span class="text-on-surface-variant font-semibold text-sm pr-1 shrink-0 hidden sm:inline">I nettbutikken:</span>' +
+            links +
+            '</div>' +
+            '</div>';
+    }
+
+    function adminHeaderHTML(root) {
         return '' +
             '<div class="w-full bg-deep-forest text-surface-cream text-center py-2 px-4 text-xs md:text-sm font-medium">' +
             '  <span class="material-symbols-outlined align-middle text-[16px] mr-1">visibility</span>' +
@@ -82,18 +151,18 @@
             '<header class="sticky top-0 z-50 bg-surface-cream shadow-sm shadow-deep-forest/10 w-full">' +
             '  <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-7xl mx-auto">' +
             '    <a class="flex items-center gap-2" href="index.html">' +
-            '      <img alt="Kulør Logo" class="h-8 md:h-10 w-auto object-contain" src="' + ROOT + 'img/kulor-logo-400.png"/>' +
+            '      <img alt="Kulør Logo" class="h-8 md:h-10 w-auto object-contain" src="' + root + 'img/kulor-logo-400.png"/>' +
             '      <span class="hidden sm:inline-block ml-1 py-0.5 px-2 rounded-full bg-deep-forest/10 text-deep-forest font-label-sm text-label-sm border border-deep-forest/20">Adminpanel demo</span>' +
             '    </a>' +
             '    <div class="flex items-center gap-4">' +
-            '      <a class="text-on-surface-variant hover:text-primary text-label-md font-label-md" href="' + ROOT + 'nettbutikk-demo/index.html">Til nettbutikk-demo</a>' +
-            '      <a class="text-on-surface-variant hover:text-primary text-label-md font-label-md" href="' + ROOT + 'index.html">Til kulor-rognan.no</a>' +
+            '      <a class="text-on-surface-variant hover:text-primary text-label-md font-label-md" href="' + root + 'nettbutikk-demo/index.html">Til nettbutikk-demo</a>' +
+            '      <a class="text-on-surface-variant hover:text-primary text-label-md font-label-md" href="' + root + 'index.html">Til kulor-rognan.no</a>' +
             '    </div>' +
             '  </div>' +
             '</header>';
     }
 
-    function adminFooter() {
+    function adminFooterHTML() {
         return '' +
             '<footer class="w-full bg-deep-forest text-white mt-section-gap">' +
             '  <div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-8 text-center text-xs text-surface-cream/60">' +
@@ -102,31 +171,25 @@
             '</footer>';
     }
 
-    function wireMobileNav() {
-        var toggle = document.querySelector("[data-mobile-nav-toggle]");
-        var nav = document.querySelector("[data-mobile-nav]");
-        if (!toggle || !nav) return;
-        toggle.addEventListener("click", function () {
-            var isOpen = nav.classList.contains("flex");
-            nav.classList.toggle("flex", !isOpen);
-            nav.classList.toggle("hidden", isOpen);
-        });
-    }
-
-    document.addEventListener("DOMContentLoaded", wireMobileNav);
-
     window.KulorLayout = {
-        injectShop: function (active) {
-            document.write('<div id="site-header">' + shopHeader(active) + '</div>');
+        // root: "" på index.html, "../" på sider ett nivå ned (nettbutikk-demo/, admin-demo/)
+        injectDemoBanner: function () {
+            document.write(demoBannerHTML());
         },
-        injectShopFooter: function () {
-            document.write('<div id="site-footer">' + shopFooter() + '</div>');
+        injectHeader: function (root, active, showCart) {
+            document.write('<div id="site-header">' + siteHeaderHTML(root, active, !!showCart) + '</div>');
+        },
+        injectStoreNav: function (root, activeKey) {
+            document.write(storeNavHTML(root, activeKey));
+        },
+        injectFooter: function (root) {
+            document.write('<div id="site-footer">' + siteFooterHTML(root) + '</div>');
         },
         injectAdmin: function () {
-            document.write('<div id="site-header">' + adminHeader() + '</div>');
+            document.write('<div id="site-header">' + adminHeaderHTML("../") + '</div>');
         },
         injectAdminFooter: function () {
-            document.write('<div id="site-footer">' + adminFooter() + '</div>');
+            document.write('<div id="site-footer">' + adminFooterHTML() + '</div>');
         }
     };
 })();

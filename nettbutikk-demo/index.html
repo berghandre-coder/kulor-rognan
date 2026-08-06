@@ -21,7 +21,9 @@
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
 <script src="../assets/layout.js"></script>
-<script>KulorLayout.injectShop('hjem');</script>
+<script>KulorLayout.injectDemoBanner();</script>
+<script>KulorLayout.injectHeader("../", "nettbutikk", true);</script>
+<script>KulorLayout.injectStoreNav("../", "oversikt");</script>
 
 <main>
   <!-- Hero -->
@@ -179,7 +181,7 @@
   </section>
 </main>
 
-<script>KulorLayout.injectShopFooter();</script>
+<script>KulorLayout.injectFooter("../");</script>
 <script src="data.js"></script>
 <script>
   var featuredWrap = document.getElementById("featured-products");

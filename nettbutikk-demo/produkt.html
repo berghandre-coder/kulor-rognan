@@ -19,14 +19,20 @@
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
 <script src="../assets/layout.js"></script>
-<script>KulorLayout.injectShop("");</script>
+<script src="data.js"></script>
+<script>KulorLayout.injectDemoBanner();</script>
+<script>
+  var productParams = new URLSearchParams(location.search);
+  var currentProduct = getProductById(productParams.get("id"));
+  KulorLayout.injectHeader("../", "nettbutikk", true);
+  KulorLayout.injectStoreNav("../", currentProduct ? currentProduct.category : "");
+</script>
 
 <main class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-10" id="product-root">
   <p class="text-center text-on-surface-variant py-24" id="not-found" style="display:none;">Fant ikke produktet. <a class="text-primary font-semibold" href="index.html">Tilbake til forsiden</a></p>
 </main>
 
-<script>KulorLayout.injectShopFooter();</script>
-<script src="data.js"></script>
+<script>KulorLayout.injectFooter("../");</script>
 <script>
 (function () {
   var params = new URLSearchParams(location.search);

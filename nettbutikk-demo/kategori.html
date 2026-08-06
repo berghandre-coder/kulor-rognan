@@ -20,10 +20,12 @@
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
 <script src="../assets/layout.js"></script>
+<script>KulorLayout.injectDemoBanner();</script>
 <script>
   var params = new URLSearchParams(location.search);
   var typeKey = params.get("type") || "inne";
-  KulorLayout.injectShop(typeKey);
+  KulorLayout.injectHeader("../", "nettbutikk", true);
+  KulorLayout.injectStoreNav("../", typeKey);
 </script>
 
 <main>
@@ -46,7 +48,7 @@
   </section>
 </main>
 
-<script>KulorLayout.injectShopFooter();</script>
+<script>KulorLayout.injectFooter("../");</script>
 <script src="data.js"></script>
 <script>
   var meta = CATEGORY_META[typeKey] || CATEGORY_META.inne;
