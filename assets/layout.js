@@ -177,7 +177,7 @@
             document.write(demoBannerHTML());
         },
         injectHeader: function (root, active, showCart) {
-            document.write('<div id="site-header">' + siteHeaderHTML(root, active, !!showCart) + '</div>');
+            document.write(siteHeaderHTML(root, active, !!showCart));
         },
         injectStoreNav: function (root, activeKey) {
             document.write(storeNavHTML(root, activeKey));
@@ -186,7 +186,7 @@
             document.write('<div id="site-footer">' + siteFooterHTML(root) + '</div>');
         },
         injectAdmin: function () {
-            document.write('<div id="site-header">' + adminHeaderHTML("../") + '</div>');
+            document.write(adminHeaderHTML("../"));
         },
         injectAdminFooter: function () {
             document.write('<div id="site-footer">' + adminFooterHTML() + '</div>');

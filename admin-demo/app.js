@@ -9,7 +9,7 @@ var DEMO_ORDERS = [
         id: "KR-1042",
         status: "ny",
         customer: { name: "Kari Nordmann", email: "kari.nordmann@epost.no", phone: "+47 912 34 567" },
-        items: [{ productName: "Kulør Interiør Matt", size: "9 l", qty: 1, colorLabel: "Varm Beige (S 1010-Y30R)", price: 2990 }],
+        items: [{ productName: "Kulør Interiør Matt", variantLabel: "Spannstørrelse", variant: "9 l", qty: 1, colorLabel: "Varm Beige (S 1010-Y30R)", price: 2990 }],
         comment: "Ønsker avhenting fredag ettermiddag.",
         createdAt: "2026-08-06T09:12:00"
     },
@@ -17,7 +17,7 @@ var DEMO_ORDERS = [
         id: "KR-1041",
         status: "under_blanding",
         customer: { name: "Ola Haugen", email: "ola.haugen@epost.no", phone: "+47 924 55 112" },
-        items: [{ productName: "Kulør Fasademaling", size: "9 l", qty: 2, colorLabel: "Skifergrå (S 6502-B)", price: 3490 }],
+        items: [{ productName: "Kulør Fasademaling", variantLabel: "Spannstørrelse", variant: "9 l", qty: 2, colorLabel: "Skifergrå (S 6502-B)", price: 3490 }],
         comment: "",
         createdAt: "2026-08-05T11:40:00"
     },
@@ -25,7 +25,7 @@ var DEMO_ORDERS = [
         id: "KR-1040",
         status: "klar",
         customer: { name: "Silje Antonsen", email: "silje.a@epost.no", phone: "+47 400 12 345" },
-        items: [{ productName: "Kulør Terrassebeis", size: "2,7 l", qty: 1, colorLabel: "Fargekode (kunde): NCS S 2010-Y50R (fra Butinox fargevelger)", price: 1090 }],
+        items: [{ productName: "Kulør Terrassebeis", variantLabel: "Spannstørrelse", variant: "2,7 l", qty: 1, colorLabel: "Fargekode (kunde): NCS S 2010-Y50R (fra Butinox fargevelger)", price: 1090 }],
         comment: "Ring gjerne når den er klar.",
         createdAt: "2026-08-04T14:05:00"
     },
@@ -34,8 +34,8 @@ var DEMO_ORDERS = [
         status: "utlevert",
         customer: { name: "Per Strand", email: "per.strand@epost.no", phone: "+47 977 88 221" },
         items: [
-            { productName: "Kulør Snekkermaling Innendørs", size: "2,7 l", qty: 1, colorLabel: "Kritthvit (S 0502-Y)", price: 1190 },
-            { productName: "Kulør Malerpensel Sett", size: "Sett à 3 stk", qty: 1, colorLabel: null, price: 149 }
+            { productName: "Kulør Snekkermaling Innendørs", variantLabel: "Spannstørrelse", variant: "2,7 l", qty: 1, colorLabel: "Kritthvit (S 0502-Y)", price: 1190 },
+            { productName: "Kulør Flatpensel", variantLabel: "Bredde", variant: "50 mm", qty: 1, colorLabel: null, price: 129 }
         ],
         comment: "",
         createdAt: "2026-08-03T10:20:00"
@@ -44,7 +44,7 @@ var DEMO_ORDERS = [
         id: "KR-1038",
         status: "ny",
         customer: { name: "Mona Iversen", email: "mona.iversen@epost.no", phone: "+47 936 21 004" },
-        items: [{ productName: "Kulør Interiør Takmaling", size: "2,7 l", qty: 1, colorLabel: "Kremhvit (S 0505-Y20R)", price: 990 }],
+        items: [{ productName: "Kulør Interiør Takmaling", variantLabel: "Spannstørrelse", variant: "2,7 l", qty: 1, colorLabel: "Kremhvit (S 0505-Y20R)", price: 990 }],
         comment: "Har dere denne på lager til i morgen?",
         createdAt: "2026-08-06T08:02:00"
     }
@@ -160,7 +160,7 @@ function openOrderModal(orderId) {
             '<div class="flex justify-between gap-3 py-2 border-b border-outline-variant/15 last:border-0">' +
             '  <div>' +
             '    <p class="font-semibold text-deep-forest">' + i.qty + '&times; ' + i.productName + '</p>' +
-            '    <p class="text-sm text-on-surface-variant">' + i.size + (i.colorLabel ? " · " + i.colorLabel : "") + '</p>' +
+            '    <p class="text-sm text-on-surface-variant">' + i.variantLabel + ': ' + i.variant + (i.colorLabel ? " · " + i.colorLabel : "") + '</p>' +
             '  </div>' +
             '  <span class="font-semibold text-deep-forest shrink-0">' + formatNOK(i.price * i.qty) + '</span>' +
             '</div>';
@@ -230,7 +230,7 @@ var editingProductId = null;
 function renderProductTable() {
     var body = document.getElementById("product-table-body");
     body.innerHTML = PRODUCTS.map(function (p) {
-        var sizesLabel = p.sizes.map(function (s) { return s.label; }).join(", ");
+        var variantsLabel = p.variants.map(function (v) { return v.label; }).join(", ");
         return '' +
             '<tr class="border-t border-outline-variant/15">' +
             '  <td class="px-4 py-3">' +
@@ -242,7 +242,7 @@ function renderProductTable() {
             '    </div>' +
             '  </td>' +
             '  <td class="px-4 py-3 text-on-surface-variant">' + CATEGORY_LABELS[p.category] + '</td>' +
-            '  <td class="px-4 py-3 text-on-surface-variant">' + sizesLabel + '</td>' +
+            '  <td class="px-4 py-3 text-on-surface-variant">' + variantsLabel + '</td>' +
             '  <td class="px-4 py-3">' + (p.hasColor ? '<span class="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">Krever farge</span>' : '<span class="text-xs px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold">Ingen farge</span>') + '</td>' +
             '  <td class="px-4 py-3">' +
             '    <label class="inline-flex items-center gap-2 cursor-pointer">' +
@@ -282,27 +282,27 @@ function renderIconPicker(selected) {
     wrap.dataset.selected = selected;
 }
 
-function renderSizeRows(sizes) {
-    var wrap = document.getElementById("pf-sizes");
+function renderVariantRows(variants) {
+    var wrap = document.getElementById("pf-variants");
     wrap.innerHTML = "";
-    (sizes.length ? sizes : [{ label: "", price: "" }]).forEach(function (s) { addSizeRow(s.label, s.price); });
+    (variants.length ? variants : [{ label: "", price: "" }]).forEach(function (v) { addVariantRow(v.label, v.price); });
 }
 
-function addSizeRow(label, price) {
-    var wrap = document.getElementById("pf-sizes");
+function addVariantRow(label, price) {
+    var wrap = document.getElementById("pf-variants");
     var row = document.createElement("div");
     row.className = "flex gap-2 items-center";
     row.innerHTML = '' +
-        '<input type="text" placeholder="Størrelse, f.eks. 2,7 l" value="' + (label || "") + '" class="flex-1 rounded-lg border border-outline-variant/50 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" data-size-label/>' +
-        '<input type="number" min="0" placeholder="Pris (kr)" value="' + (price === "" || price === undefined ? "" : price) + '" class="w-28 rounded-lg border border-outline-variant/50 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" data-size-price/>' +
-        '<button type="button" class="text-on-surface-variant hover:text-error" aria-label="Fjern størrelse" data-remove-size><span class="material-symbols-outlined text-[18px]">close</span></button>';
-    row.querySelector("[data-remove-size]").addEventListener("click", function () {
+        '<input type="text" placeholder="Variant, f.eks. 2,7 l, 50 mm eller 30 mm × 33 m" value="' + (label || "") + '" class="flex-1 rounded-lg border border-outline-variant/50 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" data-variant-label/>' +
+        '<input type="number" min="0" placeholder="Pris (kr)" value="' + (price === "" || price === undefined ? "" : price) + '" class="w-28 rounded-lg border border-outline-variant/50 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" data-variant-price/>' +
+        '<button type="button" class="text-on-surface-variant hover:text-error" aria-label="Fjern variant" data-remove-variant><span class="material-symbols-outlined text-[18px]">close</span></button>';
+    row.querySelector("[data-remove-variant]").addEventListener("click", function () {
         if (wrap.children.length > 1) row.remove();
     });
     wrap.appendChild(row);
 }
 
-document.getElementById("pf-add-size").addEventListener("click", function () { addSizeRow("", ""); });
+document.getElementById("pf-add-variant").addEventListener("click", function () { addVariantRow("", ""); });
 
 function openProductModal(product) {
     editingProductId = product ? product.id : null;
@@ -316,7 +316,7 @@ function openProductModal(product) {
     document.getElementById("pf-active").checked = product ? product.active !== false : true;
     document.getElementById("pf-error").classList.add("hidden");
     renderIconPicker(product ? product.icon : ICON_CHOICES[0]);
-    renderSizeRows(product ? product.sizes : []);
+    renderVariantRows(product ? product.variants : []);
     document.getElementById("product-modal").classList.remove("hidden");
 }
 
@@ -335,15 +335,15 @@ document.getElementById("product-form").addEventListener("submit", function (e) 
     e.preventDefault();
     var errorEl = document.getElementById("pf-error");
     var name = document.getElementById("pf-name").value.trim();
-    var sizes = Array.from(document.querySelectorAll("#pf-sizes > div")).map(function (row) {
+    var variants = Array.from(document.querySelectorAll("#pf-variants > div")).map(function (row) {
         return {
-            label: row.querySelector("[data-size-label]").value.trim(),
-            price: Number(row.querySelector("[data-size-price]").value) || 0
+            label: row.querySelector("[data-variant-label]").value.trim(),
+            price: Number(row.querySelector("[data-variant-price]").value) || 0
         };
-    }).filter(function (s) { return s.label && s.price > 0; });
+    }).filter(function (v) { return v.label && v.price > 0; });
 
-    if (!name || !sizes.length) {
-        errorEl.textContent = "Fyll ut produktnavn og minst én spannstørrelse med pris.";
+    if (!name || !variants.length) {
+        errorEl.textContent = "Fyll ut produktnavn og minst én variant med pris.";
         errorEl.classList.remove("hidden");
         return;
     }
@@ -360,8 +360,13 @@ document.getElementById("product-form").addEventListener("submit", function (e) 
         tint: category,
         hasColor: document.getElementById("pf-has-color").checked,
         active: document.getElementById("pf-active").checked,
-        sizes: sizes
+        variants: variants
     };
+    if (!editingProductId) {
+        // Nye produkter opprettet i demoen får en generisk variantetikett
+        // ("Størrelse") siden skjemaet ikke ber om variant-type.
+        data.variantType = "storrelse";
+    }
 
     if (editingProductId) {
         Object.assign(getProductById(editingProductId), data);

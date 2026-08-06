@@ -84,7 +84,7 @@
         '      <h3 class="font-bold text-deep-forest truncate">' + line.productName + '</h3>' +
         '      <button data-remove="' + line.lineId + '" class="text-on-surface-variant hover:text-error shrink-0" aria-label="Fjern vare"><span class="material-symbols-outlined text-[20px]">delete</span></button>' +
         '    </div>' +
-        '    <p class="text-sm text-on-surface-variant">Størrelse: ' + line.size + '</p>' +
+        '    <p class="text-sm text-on-surface-variant">' + line.variantLabel + ': ' + line.variant + '</p>' +
         (line.colorLabel ? '    <p class="text-sm text-on-surface-variant">Farge: ' + line.colorLabel + '</p>' : '') +
         (line.comment ? '    <p class="text-xs text-on-surface-variant italic mt-1">"' + line.comment + '"</p>' : '') +
         '    <div class="flex items-center justify-between mt-2">' +

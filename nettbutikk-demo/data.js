@@ -7,6 +7,19 @@
 const CART_KEY = "kulor_demo_cart";
 const LAST_ORDER_KEY = "kulor_demo_last_order";
 
+/*
+ * Variant-type styrer hvilket valg produktsiden viser og hvilken
+ * etikett varianten får gjennom handlekurv, checkout, bekreftelse og
+ * admin - ingen produkter bruker "spannstørrelse" som standard lenger.
+ */
+const VARIANT_TYPES = {
+    spann: { heading: "Velg spannstørrelse", label: "Spannstørrelse" },
+    bredde: { heading: "Velg bredde", label: "Bredde" },
+    rullbredde: { heading: "Velg rullbredde og lugg", label: "Rullbredde og lugg" },
+    tape: { heading: "Velg bredde og lengde", label: "Bredde og lengde" },
+    storrelse: { heading: "Velg størrelse", label: "Størrelse" }
+};
+
 const PRODUCTS = [
     {
         id: "veggmaling-inne",
@@ -17,8 +30,9 @@ const PRODUCTS = [
         subcategory: "Veggmaling",
         icon: "format_paint",
         tint: "inne",
+        variantType: "spann",
         hasColor: true,
-        sizes: [
+        variants: [
             { label: "0,68 l", price: 349 },
             { label: "2,7 l", price: 1090 },
             { label: "9 l", price: 2990 }
@@ -33,8 +47,9 @@ const PRODUCTS = [
         subcategory: "Takmaling",
         icon: "roofing",
         tint: "inne",
+        variantType: "spann",
         hasColor: true,
-        sizes: [
+        variants: [
             { label: "0,68 l", price: 329 },
             { label: "2,7 l", price: 990 },
             { label: "9 l", price: 2790 }
@@ -49,8 +64,9 @@ const PRODUCTS = [
         subcategory: "Panel, dør og list",
         icon: "door_front",
         tint: "inne",
+        variantType: "spann",
         hasColor: true,
-        sizes: [
+        variants: [
             { label: "0,68 l", price: 399 },
             { label: "2,7 l", price: 1190 }
         ]
@@ -64,8 +80,9 @@ const PRODUCTS = [
         subcategory: "Hus og fasade",
         icon: "home_work",
         tint: "ute",
+        variantType: "spann",
         hasColor: true,
-        sizes: [
+        variants: [
             { label: "2,7 l", price: 1290 },
             { label: "9 l", price: 3490 }
         ]
@@ -79,8 +96,9 @@ const PRODUCTS = [
         subcategory: "Terrasse og platting",
         icon: "deck",
         tint: "ute",
+        variantType: "spann",
         hasColor: true,
-        sizes: [
+        variants: [
             { label: "0,68 l", price: 429 },
             { label: "2,7 l", price: 1090 }
         ]
@@ -94,53 +112,79 @@ const PRODUCTS = [
         subcategory: "Mur og grunnmur",
         icon: "domain",
         tint: "ute",
+        variantType: "spann",
         hasColor: false,
-        sizes: [
+        variants: [
             { label: "2,7 l", price: 379 },
             { label: "9 l", price: 990 }
         ]
     },
     {
-        id: "malerrull",
-        name: "Kulør Malerrull Profi",
-        shortDesc: "Rull med kort lugg for glatte flater. Passer til de fleste malingstyper.",
-        useArea: "Verktøy",
-        category: "tilbehor",
-        subcategory: "Ruller",
-        icon: "construction",
-        tint: "tilbehor",
-        hasColor: false,
-        sizes: [
-            { label: "1 stk", price: 99 },
-            { label: "3-pakning", price: 249 }
-        ]
-    },
-    {
-        id: "malerpensel",
-        name: "Kulør Malerpensel Sett",
-        shortDesc: "Sett med tre pensler i ulike bredder for kanter, listverk og detaljer.",
-        useArea: "Verktøy",
+        id: "flatpensel",
+        name: "Kulør Flatpensel",
+        shortDesc: "Flatpensel med syntetbust for jevne strøk med både vann- og oljebasert maling.",
+        useArea: "Pensler",
         category: "tilbehor",
         subcategory: "Pensler",
         icon: "brush",
         tint: "tilbehor",
+        variantType: "bredde",
         hasColor: false,
-        sizes: [
-            { label: "Sett à 3 stk", price: 149 }
+        variants: [
+            { label: "35 mm", price: 99 },
+            { label: "50 mm", price: 129 },
+            { label: "70 mm", price: 159 }
         ]
     },
     {
-        id: "penselvask",
-        name: "Kulør Penselvask",
-        shortDesc: "Rengjøringsmiddel for pensler og ruller. Forlenger levetiden på verktøyet.",
-        useArea: "Vedlikehold",
+        id: "malerrull",
+        name: "Kulør Malerrull Profi",
+        shortDesc: "Malerrull med skumkjerne for jevn påføring. Velg lugglengde etter overflaten du skal male.",
+        useArea: "Ruller",
         category: "tilbehor",
-        subcategory: "Vaskemidler",
-        icon: "cleaning_services",
+        subcategory: "Ruller",
+        icon: "construction",
         tint: "tilbehor",
+        variantType: "rullbredde",
         hasColor: false,
-        sizes: [
-            { label: "0,5 l", price: 89 }
+        variants: [
+            { label: "100 mm – kort lugg (glatte flater)", price: 79 },
+            { label: "180 mm – middels lugg (standard vegg og tak)", price: 99 },
+            { label: "250 mm – lang lugg (grov struktur og mur)", price: 129 }
+        ]
+    },
+    {
+        id: "malerteip",
+        name: "Kulør Malerteip",
+        shortDesc: "Malerteip som gir rene avslutningslinjer. Tåler inntil 5 dager utendørs.",
+        useArea: "Avdekking",
+        category: "tilbehor",
+        subcategory: "Tape",
+        icon: "horizontal_rule",
+        tint: "tilbehor",
+        variantType: "tape",
+        hasColor: false,
+        variants: [
+            { label: "19 mm × 33 m", price: 49 },
+            { label: "30 mm × 33 m", price: 69 },
+            { label: "50 mm × 33 m", price: 89 }
+        ]
+    },
+    {
+        id: "sparkelmasse",
+        name: "Kulør Sparkelmasse",
+        shortDesc: "Ferdigblandet sparkelmasse for utjevning av mindre skader og sprekker før maling.",
+        useArea: "Forarbeid",
+        category: "tilbehor",
+        subcategory: "Sparkel og forarbeid",
+        icon: "texture",
+        tint: "tilbehor",
+        variantType: "storrelse",
+        hasColor: false,
+        variants: [
+            { label: "0,33 kg", price: 69 },
+            { label: "1 kg", price: 129 },
+            { label: "5 kg", price: 349 }
         ]
     }
 ];
@@ -160,8 +204,8 @@ const CATEGORY_META = {
     },
     tilbehor: {
         title: "Tilbehør",
-        intro: "Pensler, ruller og annet du trenger for et godt resultat.",
-        subcategories: ["Pensler", "Ruller", "Vaskemidler"]
+        intro: "Pensler, ruller, tape og forarbeid du trenger for et godt resultat.",
+        subcategories: ["Pensler", "Ruller", "Tape", "Sparkel og forarbeid"]
     }
 };
 
@@ -231,7 +275,7 @@ function updateCartQty(lineId, qty) {
 }
 
 function cartLineTotal(line) {
-    return line.sizePrice * line.qty;
+    return line.variantPrice * line.qty;
 }
 
 function cartTotal(cart) {
@@ -264,7 +308,8 @@ var TINT_GRADIENTS = {
 
 function productCardHTML(product) {
     var iconColor = product.tint === "tilbehor" ? "text-deep-forest" : "text-white";
-    var fromPrice = product.sizes[0].price;
+    var fromPrice = product.variants[0].price;
+    var ctaText = VARIANT_TYPES[product.variantType].heading + (product.hasColor ? " og farge" : "");
     return '' +
         '<a href="produkt.html?id=' + product.id + '" class="group flex flex-col bg-white rounded-xl overflow-hidden shadow-sm shadow-deep-forest/5 hover:shadow-md transition-all duration-300 border border-outline-variant/20">' +
         '  <div class="aspect-[4/3] bg-gradient-to-br ' + TINT_GRADIENTS[product.tint] + ' flex items-center justify-center">' +
@@ -278,7 +323,7 @@ function productCardHTML(product) {
         '      <span class="text-xs text-on-surface-variant">Pris fra</span>' +
         '      <span class="font-bold text-primary text-lg">' + formatNOK(fromPrice) + '</span>' +
         '    </div>' +
-        '    <span class="w-full text-center inline-flex items-center justify-center gap-1 bg-primary/10 group-hover:bg-vibrant-orange group-hover:text-white text-primary text-sm font-semibold py-2.5 px-3 rounded-lg transition-colors">Velg størrelse og farge <span class="material-symbols-outlined text-[16px]">arrow_forward</span></span>' +
+        '    <span class="w-full text-center inline-flex items-center justify-center gap-1 bg-primary/10 group-hover:bg-vibrant-orange group-hover:text-white text-primary text-sm font-semibold py-2.5 px-3 rounded-lg transition-colors">' + ctaText + ' <span class="material-symbols-outlined text-[16px]">arrow_forward</span></span>' +
         '  </div>' +
         '</a>';
 }

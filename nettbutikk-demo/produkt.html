@@ -49,13 +49,14 @@
   var iconColor = product.tint === "tilbehor" ? "text-deep-forest" : "text-white";
   var gradient = TINT_GRADIENTS[product.tint];
 
-  var sizesHTML = product.sizes.map(function (s, i) {
+  var variantMeta = VARIANT_TYPES[product.variantType];
+  var variantsHTML = product.variants.map(function (v, i) {
     return '' +
-      '<label class="size-option cursor-pointer">' +
-      '  <input class="peer sr-only" type="radio" name="size" value="' + i + '" ' + (i === 0 ? "checked" : "") + '/>' +
+      '<label class="cursor-pointer">' +
+      '  <input class="peer sr-only" type="radio" name="variant" value="' + i + '" ' + (i === 0 ? "checked" : "") + '/>' +
       '  <div class="border-2 border-outline-variant/40 peer-checked:border-vibrant-orange peer-checked:bg-vibrant-orange/10 rounded-lg px-4 py-3 text-center transition-colors">' +
-      '    <div class="font-bold text-deep-forest">' + s.label + '</div>' +
-      '    <div class="text-sm text-on-surface-variant">' + formatNOK(s.price) + '</div>' +
+      '    <div class="font-bold text-deep-forest">' + v.label + '</div>' +
+      '    <div class="text-sm text-on-surface-variant">' + formatNOK(v.price) + '</div>' +
       '  </div>' +
       '</label>';
   }).join("");
@@ -103,8 +104,8 @@
     '    <p class="text-on-surface-variant mb-6">' + product.shortDesc + '</p>' +
 
     '    <div class="mb-6">' +
-    '      <h2 class="font-headline-md text-lg text-deep-forest mb-3">Velg spannstørrelse</h2>' +
-    '      <div id="size-options" class="grid grid-cols-3 gap-3">' + sizesHTML + '</div>' +
+    '      <h2 class="font-headline-md text-lg text-deep-forest mb-3">' + variantMeta.heading + '</h2>' +
+    '      <div id="variant-options" class="grid grid-cols-3 gap-3">' + variantsHTML + '</div>' +
     '    </div>' +
 
     '    <div class="mb-2">' +
@@ -125,7 +126,7 @@
 
     '    <div class="mt-8" id="add-to-cart-area">' +
     '      <div class="flex items-center justify-between mb-3">' +
-    '        <span class="text-on-surface-variant text-sm">Pris for valgt størrelse</span>' +
+    '        <span class="text-on-surface-variant text-sm">Pris for valgt variant</span>' +
     '        <span id="line-total" class="text-2xl font-bold text-primary"></span>' +
     '      </div>' +
     '      <button type="button" id="add-to-cart-btn" class="w-full bg-vibrant-orange hover:bg-primary-container text-white font-bold py-3.5 rounded-lg transition-all shadow-md shadow-deep-forest/10 flex items-center justify-center gap-2">' +
@@ -144,16 +145,16 @@
     '</div>' +
     '<div id="related-wrap" class="mt-section-gap"></div>';
 
-  // ---- Size selection ----
-  function selectedSize() {
-    var idx = parseInt(root.querySelector('input[name="size"]:checked').value, 10);
-    return product.sizes[idx];
+  // ---- Variant selection ----
+  function selectedVariant() {
+    var idx = parseInt(root.querySelector('input[name="variant"]:checked').value, 10);
+    return product.variants[idx];
   }
   function updateLineTotal() {
-    var total = selectedSize().price * qty;
+    var total = selectedVariant().price * qty;
     document.getElementById("line-total").textContent = formatNOK(total);
   }
-  root.querySelectorAll('input[name="size"]').forEach(function (input) {
+  root.querySelectorAll('input[name="variant"]').forEach(function (input) {
     input.addEventListener("change", updateLineTotal);
   });
 
@@ -257,15 +258,16 @@
       }
     }
 
-    var size = selectedSize();
+    var variant = selectedVariant();
     addToCart({
       lineId: "line-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
       productId: product.id,
       productName: product.name,
       icon: product.icon,
       tint: product.tint,
-      size: size.label,
-      sizePrice: size.price,
+      variant: variant.label,
+      variantPrice: variant.price,
+      variantLabel: variantMeta.label,
       qty: qty,
       colorLabel: colorLabel,
       comment: document.getElementById("comment").value.trim()
