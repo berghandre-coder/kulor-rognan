@@ -4,6 +4,8 @@ _Foreløpig plan · Sist oppdatert: 2026-08-12 · Erstatter tidligere versjon (s
 
 Kulør Rognan går videre fra klikkbar demo (se [nettbutikk-demo-status.md](nettbutikk-demo-status.md)) til en reell pilot de kan teste i butikken. Kunden betaler for **etablering/implementering** pluss et løpende **abonnement**, mens **AEMA beholder fullt eierskap** til kildekode og plattformarkitektur, med rett til å videreutvikle og videreselge løsningen til andre kunder. Dette dokumentet er styrende for de kommersielle og arkitektoniske beslutningene som er tatt for piloten. Teknisk detaljplan for selve nettbutikk-funksjonaliteten (databasestruktur for produkter/kategorier, klikk-og-hent-flyt osv.) ligger fortsatt i [nettbutikk-utviklingsplan.md](nettbutikk-utviklingsplan.md), men **betalingsdelen i det dokumentet er utdatert** (beskriver Vipps) – dette dokumentet er nå fasit for betaling og infrastruktur.
 
+**Utgangspunkt bekreftet:** Kunden er svært fornøyd med design og brukeropplevelse i dagens `nettbutikk-demo/`. Denne beholdes derfor som frontend-grunnlag for MVP-en – det bygges **ikke** om fra bunnen. Arbeidet videre handler om å koble eksisterende sider og admin-mønstre til ekte Supabase-data og Stripe-betaling (se pkt. 12 for hva dette faktisk sparer av tid), samt å trekke ut hvitmerke-konfigurasjonen (pkt. 1).
+
 ## 1. Arkitektur og eierskap
 
 Fordi koden skal gjenbrukes til flere kunder senere, bygges MVP-en **hvitmerke-klar** allerede nå, selv om den kun driftes for én kunde i piloten:
@@ -106,11 +108,32 @@ Avklar med kunden på forhånd hva som avgjør om piloten regnes som vellykket, 
 - **Stripe vs. tidligere Vipps-antakelse**: alt tidligere planarbeid som forutsatte Vipps (inkl. deler av [nettbutikk-utviklingsplan.md](nettbutikk-utviklingsplan.md) og den nåværende demoens Vipps-styrte betalingsknapp) må oppdateres i tråd med dette dokumentet før faktisk utvikling starter.
 - Øvrige risikoer fra tidligere plan (fargedata, driftsrutine i butikk, scope-kryp på produktregistrering) gjelder fortsatt.
 
+## 12. Omfang og tidsestimat
+
+Fordi dagens demo beholdes som frontend-grunnlag (se innledningen), er ikke dette et fra-bunnen-estimat. Utviklingstimer er delt i det som gjenbrukes direkte fra `nettbutikk-demo/`/`admin-demo/` og det som uansett er nytt arbeid (backend, betaling, infrastruktur fantes ikke i demoen):
+
+| Del | Fra bunnen | Med demo som grunnlag |
+|---|---|---|
+| Kjerneoppsett: repo, whitelabel-konfig, `store_id` | 10–15 | 8–12 |
+| Supabase-database (skjema, RLS) | 15–20 | 15–20 (uendret – finnes ikke i demoen) |
+| Supabase Storage + bildekomprimering | 8–12 | 8–12 (uendret) |
+| Migrere frontend fra `data.js` til Supabase | 20–25 | 10–15 (sider/komponenter er ferdig bygget) |
+| Fargevalgsløsning | 15–20 | 4–6 (UI-en er nesten ferdig) |
+| Handlekurv + checkout (Stripe) | 10–15 | 8–12 |
+| Stripe-integrasjon | 15–20 | 15–20 (uendret – demoens betalingsknapp er ren staffasje) |
+| Ordreflyt + statuser + e-post | 15–20 | 10–15 (admin-UI for statusendring finnes) |
+| Adminpanel (auth, bilde-CRUD, ekte lagring) | 25–35 | 18–25 (skjema/ikonvelger finnes) |
+| Netlify-oppsett | 8–10 | 5–8 |
+| Testing, mobiltilpasning, publisering, opplæring | 15–20 | 12–16 |
+| **Sum** | **~166–232 t** | **~120–160 t** |
+
+Ikke inkludert i timeestimatet: avtaleverk/juridisk arbeid (pkt. 9). Ved 30 000 kr i etablering (pkt. 8) mot 120–160 utviklingstimer er den effektive timeprisen lav – bevisst akseptert som investering i en gjenbrukbar plattform, men bør holdes synlig i egen intern kalkyle, ikke bare i kundens tilbud.
+
 ## Neste steg
 
 1. Avklar punkt 9 (avtaleverk) og eierskaps-/eksklusivitetsspørsmål med kunden før utvikling starter
-2. Sett opp privat kjernerepo adskilt fra dette demo-repoet, med konfigurasjonslag for hvitmerking og `store_id` i datamodellen
+2. Sett opp privat kjernerepo basert på dagens `nettbutikk-demo/`/`admin-demo/`, med konfigurasjonslag for hvitmerking og `store_id` i datamodellen
 3. Opprett navngitte Supabase- og Netlify-prosjekter på AEMAs eksisterende kontoer (pkt. 6)
-4. Bygg MVP-en: Supabase for data/bilder, Stripe for betaling, statisk frontend uten build-avhengighet til innhold (pkt. 3–5)
+4. Migrer eksisterende demo-sider til Supabase for data/bilder og Stripe for betaling, uten build-avhengighet til innhold (pkt. 3–5, 12)
 5. Oppdater [nettbutikk-utviklingsplan.md](nettbutikk-utviklingsplan.md) sin betalingsdel til Stripe, så de to dokumentene ikke motsier hverandre
 6. Definer testperiode og suksesskriterier (pkt. 10) skriftlig med kunden før pilotstart
