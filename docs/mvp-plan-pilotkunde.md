@@ -41,6 +41,7 @@ Vipps er tatt ut av MVP-en. Kunden ønsker Stripe fra start:
 - **Supabase Storage**: produktbilder, logoer og andre opplastede bilder lagres her, **ikke** i Netlify-deployen. Dette holder selve applikasjonskoden liten og uavhengig av innhold.
 - **Bildekomprimering**: samme prinsipp som i AEMA Booking – mål om bilder rundt **~130 KB** der det gir god nok kvalitet, for å holde lagrings- og båndbreddekostnader lave.
 - **Admin uten deploy**: butikken skal kunne opprette/redigere produkter, priser, bilder og tekster gjennom adminpanelet (bygger videre på admin-demoens produktskjema) uten at det krever en ny Netlify-deploy.
+- Produktdataene inkluderer også lagerstatus og forventet leveringstid (se pkt. 13) – samme prinsipp, ingen deploy for å endre dette.
 
 ## 5. Netlify og deploy-strategi
 
@@ -81,6 +82,7 @@ Med komprimerte produktbilder i Supabase Storage (~130 KB) og én lokal butikk m
 - **600 kr/mnd skal ikke automatisk bli standardpris** for senere enkeltkunder eller en eventuell kjedeutrulling – prisen for videre skalering vurderes separat når det blir aktuelt, og avhenger blant annet av volum og hvilken infrastrukturmodell (single-tenant vs. multi-tenant) som er i bruk da.
 - **Større videreutvikling og spesialtilpasninger kommer utenfor månedsprisen.**
 - Hold fortsatt **produktregistrering utover avtalt antall** utenfor fastprisen for etablering.
+- Lagerstatus/fjernlager (pkt. 13) åpner for en prisstrategi der butikken bevisst kan selge enkelte bestillingsvarer med lavere margin for å trekke kunder til nettbutikken, uten å finansiere eget varelager for dem – en del av salgsargumentet, ikke noe som endrer AEMAs egen prising i pkt. 8.
 
 ## 9. Avtaleverk som må på plass før pilotstart
 
@@ -101,6 +103,7 @@ Avklar med kunden på forhånd hva som avgjør om piloten regnes som vellykket. 
 - Butikkens ansatte kan drifte ordreflyten og redigere produkter/priser/bilder i admin uten løpende bistand fra AEMA, og uten at det krever noen deploy
 - Stripe-betalingsflyten fungerer uten kritiske feil, med kundens egen konto
 - Kundetilbakemelding på om løsningen faktisk sparer tid i butikken
+- Butikken har lagt inn og solgt minst én fjernlager-/bestillingsvare (pkt. 13) i løpet av testperioden, med lagerstatus og leveringstid tydelig kommunisert til kunden gjennom hele kjøpsflyten
 
 ## 11. Risikoer
 
@@ -132,6 +135,32 @@ Fordi dagens demo beholdes som frontend-grunnlag (se innledningen), er ikke dett
 | **Sum** | **~166–232 t** | **~120–160 t** |
 
 Ikke inkludert i timeestimatet: avtaleverk/juridisk arbeid (pkt. 9). Ved 30 000 kr i etablering (pkt. 8) mot 120–160 utviklingstimer er den effektive timeprisen lav – bevisst akseptert som investering i en gjenbrukbar plattform, men bør holdes synlig i egen intern kalkyle, ikke bare i kundens tilbud.
+
+## 13. Lagervarer og fjernlager/bestillingsvarer
+
+Kulør Rognan skal ikke være begrenset til varer de fysisk har på lager i butikk. MVP-en støtter også bestillingsvarer fra leverandør/fjernlager (f.eks. gulv, tepper, fliser, tapet), slik at butikken kan tilby et betydelig større sortiment **uten å binde kapital eller lagerplass lokalt**. Dette er en kommersiell fordel, ikke bare en teknisk detalj – se koblingen til pkt. 8 og 10 under.
+
+**Viktig avgrensning:** dette skal i MVP-en være **manuelt administrert av butikken**. Ingen integrasjon mot leverandør-, kjede- eller ERP-lager nå – målet er kun å gjøre plattformen *klar* for begge vareflytene, ikke å automatisere dem.
+
+**MVP-funksjonalitet:**
+- To lagerstatuser per produkt/variant: **På lager** og **Fjernlager/bestillingsvare**
+- Kunden kan gjennomføre kjøp med Stripe og velge klikk-og-hent uansett status – ingen egen kjøpsflyt for bestillingsvarer
+- Nettbutikken viser tydelig forventet leveringstid basert på status, f.eks. «På lager – normalt klar for henting samme dag» / «Fjernlager – forventet levering til butikk 3–7 dager»
+
+**Datamodell** (utvidelse av `product_variants` fra [nettbutikk-utviklingsplan.md](nettbutikk-utviklingsplan.md) pkt. 2):
+- `stock_status`: `på_lager` eller `fjernlager`
+- `expected_lead_time`: tekst vist til kunden (f.eks. «3–7 dager»)
+- `supplier_reference`: internt felt for leverandør/fjernlager-referanse – vises kun i admin, aldri til kunden
+- `campaign_price`: valgfri alternativ pris, for bevisst lavere margin på enkelte bestillingsvarer
+
+**Adminpanelet:**
+- Butikken setter lagerstatus, forventet leveringstid, ev. leverandørreferanse og kampanjepris manuelt per produkt/variant – samme skjema-mønster som dagens admin-demo, ikke en ny arbeidsflyt
+- Admin bør vise lagerstatus per ordrelinje, slik at butikken kan planlegge henting riktig når en ordre blander lagervarer og fjernlagervarer
+
+**Kundereise/produktvisning:**
+- Lagerstatus og forventet leveringstid vises på produktkort og produktside, ved siden av pris og variant
+- Handlekurv, checkout og bekreftelse viser samme informasjon per linje – spesielt viktig når en ordre inneholder en blanding av lagervarer og fjernlagervarer, slik at kunden vet hva som er klart raskt og hva som tar tid
+- Ordrestatus-flyten (Ny → Under blanding → Klar til henting → Utlevert) er uendret, men «klar til henting»-tidspunktet vil naturlig variere mer for fjernlagervarer
 
 ## Neste steg
 
