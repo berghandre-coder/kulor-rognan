@@ -76,6 +76,8 @@ Med komprimerte produktbilder i Supabase Storage (~130 KB) og én lokal butikk m
 
 - **Pilotpris antydet til kunden:** ca. **30 000 kr i etablering/implementering** + **600 kr/mnd** i abonnement.
 - Dette er bevisst en **lav pilot-/referansepris**, fordi Kulør Rognan kan bli inngangen til en større utrulling mot **Kulør- og Happy Homes-kjedene**. Verdien av en referansekunde og et fungerende kjede-case vurderes som del av avtalen, ikke bare den direkte inntekten.
+- **Investeringslogikk:** Kulør- og Happy Homes-kjedene består til sammen av rundt **98 butikker (38 + 60)**. Selv om kun **~10 % (≈10 butikker)** velger løsningen ved en eventuell kjedeutrulling, representerer det et vesentlig større inntektsgrunnlag enn piloten alene – dette er hva som gjør den lave pilotprisen til en fornuftig investering, ikke bare en rabatt. Konkret prising for en slik utrulling er fortsatt ikke fastsatt (jf. neste punkt), så regnestykket er foreløpig kvalitativt.
+- **Piloten selger seg selv best gjennom resultater, ikke bare teknikk.** Målet er at Kulør Rognan lykkes med **økt salg** gjennom løsningen – det er dette som faktisk gjør piloten til et overbevisende case å vise frem for kjedene, mer enn at løsningen bare fungerer teknisk. Se pkt. 10.
 - **600 kr/mnd skal ikke automatisk bli standardpris** for senere enkeltkunder eller en eventuell kjedeutrulling – prisen for videre skalering vurderes separat når det blir aktuelt, og avhenger blant annet av volum og hvilken infrastrukturmodell (single-tenant vs. multi-tenant) som er i bruk da.
 - **Større videreutvikling og spesialtilpasninger kommer utenfor månedsprisen.**
 - Hold fortsatt **produktregistrering utover avtalt antall** utenfor fastprisen for etablering.
@@ -92,8 +94,9 @@ Dette er ikke teknisk arbeid, men bør på plass parallelt med utviklingen – i
 
 ## 10. Suksesskriterier for piloten
 
-Avklar med kunden på forhånd hva som avgjør om piloten regnes som vellykket, f.eks.:
+Avklar med kunden på forhånd hva som avgjør om piloten regnes som vellykket. Det viktigste kriteriet er forretningsresultatet, ikke bare at teknikken virker:
 
+- **Målbar salgsøkning for Kulør Rognan** knyttet til nettbutikken/klikk-og-hent i testperioden – det overordnede målet for piloten, og det som gir et reelt case å vise frem for Kulør- og Happy Homes-kjedene. Avklar med kunden på forhånd hvordan dette skal måles (f.eks. omsetning via nettbutikken, sammenlignet mot en tilsvarende periode uten løsningen, eller mot butikkens egne salgsmål).
 - Et gitt antall reelle ordre gjennomført klikk-og-hent i løpet av en definert testperiode (f.eks. 4–8 uker)
 - Butikkens ansatte kan drifte ordreflyten og redigere produkter/priser/bilder i admin uten løpende bistand fra AEMA, og uten at det krever noen deploy
 - Stripe-betalingsflyten fungerer uten kritiske feil, med kundens egen konto
@@ -104,6 +107,7 @@ Avklar med kunden på forhånd hva som avgjør om piloten regnes som vellykket, 
 - **Forventningsavklaring om eierskap** er fortsatt den største risikoen – uten tydelig avtale kan kunden anta de kjøper koden. Konsekvent bruk av «etablering»/«implementering» fremfor «kjøp» i all kommunikasjon reduserer denne risikoen, men avtalen (pkt. 9) må uansett være eksplisitt.
 - **Avhengighet til AEMA som leverandør**: siden koden ikke overleveres, er kunden avhengig av AEMAs fortsatte drift. En enkel driftskontinuitetsplan styrker tilliten i salget.
 - **Kjede-mulighet er en mulighet, ikke en forpliktelse**: Kulør/Happy Homes-utrulling er en strategisk oppside som begrunner lav pilotpris, men bør ikke loves til kunden som noe konkret før det faktisk er avtalt.
+- **Teknisk suksess er ikke nok**: en pilot som fungerer feilfritt men ikke gir Kulør Rognan økt salg, er et svakt utgangspunkt for en kjedesamtale. Salgsmåling (pkt. 10) bør derfor på plass fra dag én, ikke legges til underveis.
 - **Konkurranseklausul/eksklusivitet**: avklar om kunden forventer at løsningen skal være unik for dem i deres marked, siden dette direkte påvirker videresalgsstrategien.
 - **Stripe vs. tidligere Vipps-antakelse**: alt tidligere planarbeid som forutsatte Vipps (inkl. deler av [nettbutikk-utviklingsplan.md](nettbutikk-utviklingsplan.md) og den nåværende demoens Vipps-styrte betalingsknapp) må oppdateres i tråd med dette dokumentet før faktisk utvikling starter.
 - Øvrige risikoer fra tidligere plan (fargedata, driftsrutine i butikk, scope-kryp på produktregistrering) gjelder fortsatt.
