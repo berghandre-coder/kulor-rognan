@@ -20,6 +20,7 @@
 <script src="../assets/tailwind-config.js"></script>
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<script src="../assets/store-config.js"></script>
 <script src="../assets/layout.js"></script>
 <script>KulorLayout.injectDemoBanner();</script>
 <script>KulorLayout.injectHeader("../", "nettbutikk", true);</script>
@@ -129,7 +130,7 @@
             <span class="material-symbols-outlined text-[28px]">storefront</span>
           </div>
           <h3 class="font-label-md text-label-md text-deep-forest font-bold mb-2">Hent i butikken</h3>
-          <p class="text-sm text-on-surface-variant">Enkel henting hos Kulør Rognan, Strandgata 11.</p>
+          <p class="text-sm text-on-surface-variant" id="pickup-hint">Enkel henting i butikken.</p>
         </div>
         <div class="text-center p-6">
           <div class="w-14 h-14 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary">
@@ -184,6 +185,8 @@
 <script>KulorLayout.injectFooter("../");</script>
 <script src="data.js"></script>
 <script>
+  document.getElementById("pickup-hint").textContent = "Enkel henting hos " + STORE_CONFIG.name + ", " + STORE_CONFIG.address + ".";
+
   var featuredWrap = document.getElementById("featured-products");
   FEATURED_PRODUCT_IDS.forEach(function (id) {
     var p = getProductById(id);

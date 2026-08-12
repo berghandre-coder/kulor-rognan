@@ -18,6 +18,7 @@
 <script src="../assets/tailwind-config.js"></script>
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<script src="../assets/store-config.js"></script>
 <script src="../assets/layout.js"></script>
 <script>KulorLayout.injectDemoBanner();</script>
 <script>KulorLayout.injectHeader("../", "nettbutikk", true);</script>
@@ -86,7 +87,7 @@
 
     '<div class="bg-surface-container rounded-xl p-6 mb-8">' +
     '  <h2 class="font-headline-md text-lg text-deep-forest mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary">storefront</span> Hentested</h2>' +
-    '  <p class="text-on-surface-variant">' + STORE_INFO.name + ', ' + STORE_INFO.address + '</p>' +
+    '  <p class="text-on-surface-variant">' + STORE_CONFIG.name + ', ' + STORE_CONFIG.address + '</p>' +
     '  <p class="text-on-surface-variant mt-1">Bestilt av: ' + order.customer.name + ' &middot; ' + order.customer.email + ' &middot; ' + order.customer.phone + '</p>' +
     (order.customer.comment ? '  <p class="text-sm text-on-surface-variant italic mt-2">Kommentar: "' + order.customer.comment + '"</p>' : '') +
     '</div>' +

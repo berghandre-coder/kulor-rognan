@@ -1,12 +1,16 @@
 /*
- * Delt header/footer for hele Kulør Rognan-nettstedet, inkludert nettbutikk-demoen.
- * Header/footer-markup er identisk med index.html sin egen header/footer -
- * nettbutikksider legger kun til et handlekurv-ikon. admin-demo bruker en
- * egen, separat header (injectAdmin) og er ikke del av dette.
+ * Delt header/footer for hele nettstedet, inkludert nettbutikk-demoen.
+ * Butikkens navn/logo/kontaktinfo hentes fra STORE_CONFIG (store-config.js),
+ * som må lastes før denne filen. Header/footer-markup er identisk med
+ * index.html sin egen header/footer - nettbutikksider legger kun til et
+ * handlekurv-ikon. admin-demo bruker en egen, separat header (injectAdmin)
+ * og er ikke del av dette.
  *
  * Kjøres synkront (ikke defer) slik at header/footer er på plass før siden vises.
  */
 (function () {
+    var YEAR = new Date().getFullYear();
+
     function navLink(href, label, isActive, extra) {
         var cls = isActive
             ? "text-primary font-bold border-b-2 border-primary pb-1 transition-colors font-label-md text-label-md hover:text-primary px-2"
@@ -32,9 +36,9 @@
         return '' +
             '<header class="sticky top-0 z-50 bg-surface-cream shadow-sm shadow-deep-forest/10 w-full transition-all duration-300">' +
             '<div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-7xl mx-auto">' +
-            '<a aria-label="Kulør Rognan Home" class="flex items-center gap-2" href="' + home + '">' +
-            '<img alt="Kulør Logo" class="h-8 md:h-10 w-auto object-contain" src="' + root + 'img/kulor-logo-400.png"/>' +
-            '<span class="sr-only">Kulør Rognan</span>' +
+            '<a aria-label="' + STORE_CONFIG.name + ' Home" class="flex items-center gap-2" href="' + home + '">' +
+            '<img alt="' + STORE_CONFIG.name + ' logo" class="h-8 md:h-10 w-auto object-contain" src="' + root + STORE_CONFIG.logoPath + '"/>' +
+            '<span class="sr-only">' + STORE_CONFIG.name + '</span>' +
             '</a>' +
             '<nav aria-label="Main Navigation" class="hidden md:flex items-center gap-6">' +
             navLink(home, "Hjem", active === "hjem") +
@@ -64,11 +68,11 @@
             '<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-section-gap">' +
             '<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter">' +
             '<div class="col-span-1">' +
-            '<div class="mb-4"><div class="mb-4"><img alt="Kulør Logo" class="h-8 md:h-10 w-auto object-contain" src="' + root + 'img/kulor-logo-400.png"/></div></div>' +
-            '<p class="font-body-md text-body-md text-surface-cream/80 mb-6">Din lokale ekspert på maling, gulv og solskjerming i Saltdal. Vi leverer kvalitet og fagkunnskap.</p>' +
+            '<div class="mb-4"><div class="mb-4"><img alt="' + STORE_CONFIG.name + ' logo" class="h-8 md:h-10 w-auto object-contain" src="' + root + STORE_CONFIG.logoPath + '"/></div></div>' +
+            '<p class="font-body-md text-body-md text-surface-cream/80 mb-6">' + STORE_CONFIG.footerTagline + '</p>' +
             '<div class="flex items-center gap-2 text-surface-cream/80">' +
             '<span class="material-symbols-outlined text-[20px] text-vibrant-orange">location_on</span>' +
-            '<span class="font-body-md text-body-md">Strandgata 11, 8250 Rognan</span>' +
+            '<span class="font-body-md text-body-md">' + STORE_CONFIG.address + '</span>' +
             '</div>' +
             '</div>' +
             '<div class="col-span-1 md:col-span-2 grid grid-cols-2 gap-8">' +
@@ -95,16 +99,16 @@
             '<div class="col-span-1 bg-on-secondary-fixed-variant/30 p-6 rounded-xl border border-white/10 h-fit">' +
             '<h3 class="font-label-md text-label-md text-vibrant-orange font-bold mb-4 uppercase tracking-wider">Åpningstider</h3>' +
             '<ul class="space-y-2 mb-6 font-body-md text-body-md text-surface-cream/90">' +
-            '<li class="flex justify-between"><span>Man - Fre</span> <span>09:00 - 17:00</span></li>' +
-            '<li class="flex justify-between"><span>Lørdag</span> <span>10:00 - 14:00</span></li>' +
-            '<li class="flex justify-between text-surface-cream/60"><span>Søndag</span> <span>Stengt</span></li>' +
+            STORE_CONFIG.openingHours.map(function (row) {
+                return '<li class="flex justify-between' + (row.muted ? " text-surface-cream/60" : "") + '"><span>' + row.label + '</span> <span>' + row.value + '</span></li>';
+            }).join("") +
             '</ul>' +
-            '<a class="flex items-center gap-2 text-white hover:text-vibrant-orange transition-colors font-label-md text-label-md font-bold" href="tel:+4775690650"><span class="material-symbols-outlined text-[20px]">call</span> 75 69 06 50</a>' +
+            '<a class="flex items-center gap-2 text-white hover:text-vibrant-orange transition-colors font-label-md text-label-md font-bold" href="tel:' + STORE_CONFIG.phoneHref + '"><span class="material-symbols-outlined text-[20px]">call</span> ' + STORE_CONFIG.phoneDisplay + '</a>' +
             '</div>' +
             '</div>' +
             '<div class="mt-12 pt-8 border-t border-white/10 flex justify-between items-center">' +
-            '<p class="font-label-sm text-label-sm text-surface-cream/60">© 2026 Kulør Rognan Fargehandel - Din lokale ekspert i Saltdal</p>' +
-            '<p class="font-label-sm text-label-sm text-surface-cream/60">Levert av © 2026 AEMA Digital AS</p>' +
+            '<p class="font-label-sm text-label-sm text-surface-cream/60">© ' + YEAR + ' ' + STORE_CONFIG.legalName + ' - ' + STORE_CONFIG.region + '</p>' +
+            '<p class="font-label-sm text-label-sm text-surface-cream/60">Levert av © ' + YEAR + ' AEMA Digital AS</p>' +
             '</div>' +
             '</div>' +
             '</footer>';
@@ -151,12 +155,12 @@
             '<header class="sticky top-0 z-50 bg-surface-cream shadow-sm shadow-deep-forest/10 w-full">' +
             '  <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-7xl mx-auto">' +
             '    <a class="flex items-center gap-2" href="index.html">' +
-            '      <img alt="Kulør Logo" class="h-8 md:h-10 w-auto object-contain" src="' + root + 'img/kulor-logo-400.png"/>' +
+            '      <img alt="' + STORE_CONFIG.name + ' logo" class="h-8 md:h-10 w-auto object-contain" src="' + root + STORE_CONFIG.logoPath + '"/>' +
             '      <span class="hidden sm:inline-block ml-1 py-0.5 px-2 rounded-full bg-deep-forest/10 text-deep-forest font-label-sm text-label-sm border border-deep-forest/20">Adminpanel demo</span>' +
             '    </a>' +
             '    <div class="flex items-center gap-4">' +
             '      <a class="text-on-surface-variant hover:text-primary text-label-md font-label-md" href="' + root + 'nettbutikk-demo/index.html">Til nettbutikk-demo</a>' +
-            '      <a class="text-on-surface-variant hover:text-primary text-label-md font-label-md" href="' + root + 'index.html">Til kulor-rognan.no</a>' +
+            '      <a class="text-on-surface-variant hover:text-primary text-label-md font-label-md" href="' + root + 'index.html">Til hovedsiden</a>' +
             '    </div>' +
             '  </div>' +
             '</header>';
@@ -166,7 +170,7 @@
         return '' +
             '<footer class="w-full bg-deep-forest text-white mt-section-gap">' +
             '  <div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-8 text-center text-xs text-surface-cream/60">' +
-            '    &copy; 2026 Kulør Rognan &ndash; adminpanel-demo, ikke i produksjon' +
+            '    &copy; ' + YEAR + ' ' + STORE_CONFIG.name + ' &ndash; adminpanel-demo, ikke i produksjon' +
             '  </div>' +
             '</footer>';
     }

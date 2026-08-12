@@ -224,12 +224,6 @@ const COLORS = [
     { id: "teglrod", name: "Teglrød", code: "S 3560-Y70R", hex: "#A24632" }
 ];
 
-const STORE_INFO = {
-    name: "Kulør Rognan",
-    address: "Strandgata 11, 8250 Rognan",
-    supplierColorUrl: "https://www.butinoxinterior.no/vare-farger/"
-};
-
 function formatNOK(amount) {
     return amount.toLocaleString("nb-NO") + " kr";
 }

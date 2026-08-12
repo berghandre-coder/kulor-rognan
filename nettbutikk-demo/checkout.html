@@ -18,6 +18,7 @@
 <script src="../assets/tailwind-config.js"></script>
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<script src="../assets/store-config.js"></script>
 <script src="../assets/layout.js"></script>
 <script>KulorLayout.injectDemoBanner();</script>
 <script>KulorLayout.injectHeader("../", "nettbutikk", true);</script>
@@ -50,7 +51,7 @@
         <input id="cf-confirm" required type="checkbox" class="mt-1 rounded border-outline-variant text-vibrant-orange focus:ring-vibrant-orange"/>
         <span class="text-sm text-deep-forest">
           <span class="font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-primary">storefront</span> Jeg bekrefter klikk og hent</span>
-          Jeg henter varene selv hos Kulør Rognan, Strandgata 11, 8250 Rognan. Ingen frakt i denne løsningen.
+          Jeg henter varene selv hos <span id="pickup-store-line"></span>. Ingen frakt i denne løsningen.
         </span>
       </label>
 
@@ -72,7 +73,7 @@
           <span id="summary-total" class="font-bold text-primary text-xl"></span>
         </div>
         <p class="text-xs text-on-surface-variant mt-3 flex items-center gap-1">
-          <span class="material-symbols-outlined text-[16px]">storefront</span> Hentes hos Kulør Rognan, Strandgata 11
+          <span class="material-symbols-outlined text-[16px]">storefront</span> <span id="pickup-store-summary"></span>
         </p>
       </div>
     </aside>
@@ -99,6 +100,9 @@
 <script>KulorLayout.injectFooter("../");</script>
 <script src="data.js"></script>
 <script>
+  document.getElementById("pickup-store-line").textContent = STORE_CONFIG.name + ", " + STORE_CONFIG.address;
+  document.getElementById("pickup-store-summary").textContent = "Hentes hos " + STORE_CONFIG.name + ", " + STORE_CONFIG.address;
+
   var cart = getCart();
   if (!cart.length) {
     document.getElementById("checkout-body").classList.add("hidden");
@@ -145,7 +149,7 @@
         phone: document.getElementById("cf-phone").value.trim(),
         comment: document.getElementById("cf-comment").value.trim()
       },
-      pickup: STORE_INFO.address
+      pickup: STORE_CONFIG.address
     };
     localStorage.setItem(LAST_ORDER_KEY, JSON.stringify(order));
     clearCart();

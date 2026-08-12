@@ -18,6 +18,7 @@
 <script src="../assets/tailwind-config.js"></script>
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<script src="../assets/store-config.js"></script>
 <script src="../assets/layout.js"></script>
 <script>KulorLayout.injectDemoBanner();</script>
 <script>
@@ -29,7 +30,7 @@
   <h1 class="font-headline-lg text-headline-lg text-deep-forest mb-2">Handlekurv</h1>
   <p class="text-on-surface-variant mb-8 flex items-center gap-2">
     <span class="material-symbols-outlined text-primary text-[18px]">storefront</span>
-    Hentested: <span class="font-semibold text-deep-forest">Kulør Rognan, Strandgata 11, 8250 Rognan</span>
+    Hentested: <span class="font-semibold text-deep-forest" id="pickup-store-line"></span>
   </p>
 
   <div id="cart-items" class="space-y-4 mb-8"></div>
@@ -56,6 +57,8 @@
 <script>KulorLayout.injectFooter("../");</script>
 <script src="data.js"></script>
 <script>
+  document.getElementById("pickup-store-line").textContent = STORE_CONFIG.name + ", " + STORE_CONFIG.address;
+
   function render() {
     var cart = getCart();
     var itemsWrap = document.getElementById("cart-items");
