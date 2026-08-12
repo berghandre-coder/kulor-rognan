@@ -6,12 +6,14 @@ Denne planen beskriver veien fra dagens klikkbare demo (se [nettbutikk-demo-stat
 
 ## 1. Anbefalt teknisk arkitektur
 
-- **Frontend:** Next.js (React), hostet på Vercel. Gjenbruker Tailwind-oppsettet som allerede finnes.
+> **Oppdatert:** Betaling, hosting og deploy-strategi under er erstattet av beslutningene i [mvp-plan-pilotkunde.md](mvp-plan-pilotkunde.md) (pkt. 3–5) – Stripe i stedet for Vipps, og en statisk frontend på Netlify (viderefører dagens demo) i stedet for Next.js/Vercel, slik at innholdsendringer i admin ikke krever ny deploy. Resten av denne planen (database, klikk-og-hent-flyt, admin) gjelder fortsatt.
+
+- **Frontend:** Statisk frontend (viderefører dagens `nettbutikk-demo/`), hostet på Netlify. Henter data fra Supabase ved kjøretid i stedet for bygge-tidspunkt, slik at admin-endringer ikke krever ny deploy.
 - **Backend/database:** Supabase (Postgres + Auth + Storage) – ferdig database, innlogging for adminbruker og bildelagring uten egen serverdrift.
-- **Betaling:** Vipps (ePayment API) som primær metode i MVP. Kort (Stripe/Nets Easy) som tillegg i fase 2.
+- **Betaling:** Stripe (kundens egen konto) som eneste metode i MVP – dekker både kort og andre Stripe-støttede betalingsmetoder uten behov for en egen Vipps-integrasjon ved siden av.
 - **E-post:** Transaksjonell e-post via Resend eller Postmark.
 - **SMS:** Ikke i MVP – legges til senere via norsk SMS-gateway, fakturert etter forbruk.
-- **Admin:** Egen enkel, passordbeskyttet adminseksjon i samme Next.js-app.
+- **Admin:** Egen enkel, passordbeskyttet adminseksjon, bygget videre på dagens admin-demo-mønster.
 
 ## 2. Databasestruktur
 
@@ -38,8 +40,8 @@ Siden leverandører (f.eks. Butinox) ikke tilbyr API/eksport, bygges løsningen 
 
 1. Kunde bygger handlekurv og går til «Til betaling»
 2. Ordre opprettes med status `ny` og betalingsstatus `venter` **før** betaling startes
-3. Betaling via Vipps ePayment (redirect/deeplink)
-4. Betaling bekreftes via **webhook fra Vipps**, ikke bare klientside-redirect
+3. Betaling via Stripe Checkout/Payment Intents, mot kundens egen Stripe-konto
+4. Betaling bekreftes via **Stripe webhook** (håndtert av en Netlify Function), ikke bare klientside-redirect
 5. Ved bekreftet betaling: e-postbekreftelse sendes, ordren dukker opp i admin
 6. Mislykket/avbrutt betaling: ordre forblir uåpnet, ingen varsling sendes
 
@@ -49,7 +51,7 @@ Siden leverandører (f.eks. Butinox) ikke tilbyr API/eksport, bygges løsningen 
 
 - Butikkansatt endrer status manuelt i admin
 - Overgang til «Klar til henting» trigger e-post (SMS i fase 2) til kunden
-- Retur/refusjon håndteres manuelt i Vipps/betalingsleverandørens dashbord i MVP
+- Retur/refusjon håndteres manuelt i Stripe-dashbordet i MVP
 
 ## 6. Adminløsning
 
@@ -63,24 +65,26 @@ Ingen rollestyring, ingen rapportmoduler, ingen kassaintegrasjon i MVP.
 - Ikke skrap/kopier bilder eller fargekart fra leverandørens side – lenk ut i stedet
 - Avklar skriftlig med leverandør om bruk av varemerke/fargenavn, og mulighet for fargeregister senere
 - **GDPR:** personvernerklæring og databehandleravtaler med hosting-, e-post- og betalingsleverandør
-- **Vipps-avtale** må opprettes av kunden (butikken) tidlig – tar tid
+- **Stripe-avtale** må opprettes og eies av kunden (butikken) tidlig – tar tid, og AEMA opptrer ikke som betalingsformidler (se [mvp-plan-pilotkunde.md](mvp-plan-pilotkunde.md) pkt. 3)
 - Ansvarsfraskrivelse i kjøpsvilkår for feilblanding grunnet feil fargekode fra kunde
 
 ## 8. MVP vs. senere
 
-**MVP (fase 1):** Kategori → produkt → variant → antall → farge (der relevant) → Vipps-betaling → ordrestatus-flyt → e-postvarsling → enkelt adminpanel → 50–75 produkter.
+**MVP (fase 1):** Kategori → produkt → variant → antall → farge (der relevant) → Stripe-betaling → ordrestatus-flyt → e-postvarsling → enkelt adminpanel → 50–75 produkter.
 
-**Fase 2:** Kortbetaling, SMS-varsling, importert fargeregister, kundekonto/ordrehistorikk, rabattkoder, flere admin-brukere, lagerintegrasjon.
+**Fase 2:** SMS-varsling, importert fargeregister, kundekonto/ordrehistorikk, rabattkoder, flere admin-brukere, lagerintegrasjon.
 
 ## 9. Risikoer og avklaringer med kunden
 
 - Leverandøravtale om fargedata kan forsinkes – MVP fungerer uavhengig av dette (fritekstfelt)
-- Vipps-oppsett tar tid og bør startes tidlig
+- Stripe-oppsett (kundens egen konto) tar tid og bør startes tidlig
 - Driftsrutine i butikk: klikk-og-hent krever at ansatte oppdaterer ordrestatus fortløpende
 - Scope-kryp på produkt-/fargeregistrering – hold fast avtalt antall i etableringsprisen
 - Refusjon/kansellering er manuell i MVP
 
 ## 10. Omtrentlig utviklingsomfang
+
+> **Erstattet av** det mer detaljerte og oppdaterte estimatet i [mvp-plan-pilotkunde.md](mvp-plan-pilotkunde.md) pkt. 12, som skiller mellom fra-bunnen-arbeid og det som gjenbrukes direkte fra dagens demo. Tabellen under står som generell referanse, med Vipps-raden rettet til Stripe.
 
 | Del | Timer |
 |---|---|
@@ -88,11 +92,11 @@ Ingen rollestyring, ingen rapportmoduler, ingen kassaintegrasjon i MVP.
 | Produktkatalog + kategori/variant-struktur | 25–35 |
 | Fargevalgsløsning | 15–20 |
 | Handlekurv + checkout | 15–20 |
-| Vipps-betalingsintegrasjon | 20–30 |
+| Stripe-betalingsintegrasjon | 15–20 |
 | Ordre-/klikk-og-hent-flyt + statuser + e-post | 20–30 |
 | Adminpanel | 30–40 |
 | Testing, mobiltilpasning, publisering, opplæring | 15–20 |
-| **Sum** | **~155–215 t** |
+| **Sum** | **~150–205 t** |
 
 Produktregistrering (50–75 stk) kommer i tillegg eller inkluderes avhengig av hvor mye rådata kunden kan levere.
 

@@ -20,7 +20,7 @@ En klikkbar frontend-demo av en klikk-og-hent nettbutikk for Kulør Rognan, bygg
 - **Kategoriside** (`kategori.html?type=inne|ute|tilbehor`) – underkategori-faner + produktgrid
 - **Produktside** (`produkt.html?id=...`) – variantvalg, antall, fargevalg (kun der relevant), kundekommentar
 - **Handlekurv** – endre antall, fjerne vare, totalsum
-- **Checkout** – kundeinfo, klikk-og-hent-bekreftelse, illustrativ Vipps-knapp med tydelig demo-melding
+- **Checkout** – kundeinfo, klikk-og-hent-bekreftelse, illustrativ betalingsknapp (nøytral stil – reell løsning bruker Stripe) med tydelig demo-melding
 - **Ordrebekreftelse** – ordrenummer, produkter, beløp, hentestedsinfo
 
 ### Admin-demo (`admin-demo/`)
@@ -63,7 +63,7 @@ Samme variantetikett følger varen gjennom hele kjeden: produktkort → produkts
 
 ## Kjente, bevisste begrensninger (demo, ikke produksjon)
 
-- Ingen ekte betaling – Vipps-knappen viser en tydelig demo-melding
+- Ingen ekte betaling – betalingsknappen viser en tydelig demo-melding (reell løsning bruker Stripe, se MVP-planen)
 - Ingen database – alt er statiske eksempeldata i `data.js` / `app.js`
 - Mobilmenyen er dekorativ (samme som på eksisterende produksjonsside – ikke noe denne demoen har endret)
 - Fargevalg bruker en kuratert liste med 12 «populære farger» + fritekstfelt + lenke til leverandør, ikke et fullt fargeregister

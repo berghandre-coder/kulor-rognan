@@ -55,8 +55,7 @@ tailwind.config = {
                 "primary-fixed-dim": "#ffb871",
                 "on-background": "#1f1b17",
                 "on-tertiary-fixed-variant": "#504538",
-                "on-primary-fixed": "#2d1600",
-                "vipps-orange": "#FF5B24"
+                "on-primary-fixed": "#2d1600"
             },
             borderRadius: {
                 "DEFAULT": "0.25rem",
