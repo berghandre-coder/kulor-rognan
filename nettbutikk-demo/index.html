@@ -20,7 +20,8 @@
 <script src="../assets/tailwind-config.js"></script>
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
-<script src="../assets/store-config.js"></script>
+  <script src="../config/stores/kulor-rognan.js"></script>
+  <script src="../assets/store-config.js"></script>
 <script src="../assets/layout.js"></script>
 <script>KulorLayout.injectDemoBanner();</script>
 <script>KulorLayout.injectHeader("../", "nettbutikk", true);</script>
@@ -183,25 +184,31 @@
 </main>
 
 <script>KulorLayout.injectFooter("../");</script>
+<script src="../assets/supabase-storefront.js"></script>
 <script src="data.js"></script>
 <script>
-  document.getElementById("pickup-hint").textContent = "Enkel henting hos " + STORE_CONFIG.name + ", " + STORE_CONFIG.address + ".";
+  STOREFRONT_READY.then(function () {
+    document.getElementById("pickup-hint").textContent = "Enkel henting hos " + STORE_CONFIG.name + ", " + STORE_CONFIG.address + ".";
 
-  var featuredWrap = document.getElementById("featured-products");
-  FEATURED_PRODUCT_IDS.forEach(function (id) {
-    var p = getProductById(id);
-    if (p) featuredWrap.insertAdjacentHTML("beforeend", productCardHTML(p));
-  });
+    var featuredWrap = document.getElementById("featured-products");
+    featuredWrap.innerHTML = "";
+    FEATURED_PRODUCT_IDS.forEach(function (id) {
+      var p = getProductById(id);
+      if (p) featuredWrap.insertAdjacentHTML("beforeend", productCardHTML(p));
+    });
 
-  var colorWrap = document.getElementById("featured-colors");
-  COLORS.forEach(function (c) {
-    colorWrap.insertAdjacentHTML("beforeend",
-      '<a href="produkt.html?id=veggmaling-inne&farge=' + c.id + '" class="group text-center block">' +
-      '<span class="block w-full aspect-square rounded-xl border border-outline-variant/40 shadow-sm group-hover:scale-105 transition-transform" style="background-color:' + c.hex + '"></span>' +
-      '<span class="block mt-2 text-xs font-semibold text-deep-forest">' + c.name + '</span>' +
-      '<span class="block text-[11px] text-on-surface-variant">' + c.code + '</span>' +
-      '</a>'
-    );
+    var colorWrap = document.getElementById("featured-colors");
+    colorWrap.innerHTML = "";
+    var colorProduct = PRODUCTS.find(function (product) { return product.hasColor; });
+    COLORS.filter(function (color) { return color.featured !== false; }).forEach(function (c) {
+      colorWrap.insertAdjacentHTML("beforeend",
+        '<a href="produkt.html?id=' + encodeURIComponent(colorProduct ? colorProduct.id : "") + '&farge=' + encodeURIComponent(c.id) + '" class="group text-center block">' +
+        '<span class="block w-full aspect-square rounded-xl border border-outline-variant/40 shadow-sm group-hover:scale-105 transition-transform" style="background-color:' + safeHexColor(c.hex) + '"></span>' +
+        '<span class="block mt-2 text-xs font-semibold text-deep-forest">' + escapeHTML(c.name) + '</span>' +
+        '<span class="block text-[11px] text-on-surface-variant">' + escapeHTML(c.code) + '</span>' +
+        '</a>'
+      );
+    });
   });
 </script>
 </body>

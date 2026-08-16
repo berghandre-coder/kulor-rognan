@@ -18,8 +18,10 @@
 <script src="../assets/tailwind-config.js"></script>
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
-<script src="../assets/store-config.js"></script>
+  <script src="../config/stores/kulor-rognan.js"></script>
+  <script src="../assets/store-config.js"></script>
 <script src="../assets/layout.js"></script>
+<script src="../assets/supabase-storefront.js"></script>
 <script src="data.js"></script>
 <script>KulorLayout.injectDemoBanner();</script>
 <script>
@@ -35,6 +37,7 @@
 
 <script>KulorLayout.injectFooter("../");</script>
 <script>
+STOREFRONT_READY.then(function () {
 (function () {
   var params = new URLSearchParams(location.search);
   var product = getProductById(params.get("id"));
@@ -45,19 +48,24 @@
     return;
   }
 
-  document.title = product.name + " (demo) - Kulør Rognan";
+  document.title = product.name + " - " + STORE_CONFIG.name;
 
-  var iconColor = product.tint === "tilbehor" ? "text-deep-forest" : "text-white";
-  var gradient = TINT_GRADIENTS[product.tint];
+  var safeTint = Object.prototype.hasOwnProperty.call(TINT_GRADIENTS, product.tint) ? product.tint : "tilbehor";
+  var iconColor = safeTint === "tilbehor" ? "text-deep-forest" : "text-white";
+  var gradient = TINT_GRADIENTS[safeTint];
+  var productCategoryMeta = CATEGORY_META[product.category] || { title: product.category || "Kategori" };
 
-  var variantMeta = VARIANT_TYPES[product.variantType];
+  var variantMeta = VARIANT_TYPES[product.variantType] || VARIANT_TYPES.storrelse;
   var variantsHTML = product.variants.map(function (v, i) {
+    var priceHTML = v.campaignPrice == null
+      ? formatNOK(v.price)
+      : '<span class="line-through mr-1">' + formatNOK(v.regularPrice) + '</span><span class="text-error font-semibold">' + formatNOK(v.price) + '</span>';
     return '' +
       '<label class="cursor-pointer">' +
       '  <input class="peer sr-only" type="radio" name="variant" value="' + i + '" ' + (i === 0 ? "checked" : "") + '/>' +
       '  <div class="border-2 border-outline-variant/40 peer-checked:border-vibrant-orange peer-checked:bg-vibrant-orange/10 rounded-lg px-4 py-3 text-center transition-colors">' +
-      '    <div class="font-bold text-deep-forest">' + v.label + '</div>' +
-      '    <div class="text-sm text-on-surface-variant">' + formatNOK(v.price) + '</div>' +
+      '    <div class="font-bold text-deep-forest">' + escapeHTML(v.label) + '</div>' +
+      '    <div class="text-sm text-on-surface-variant">' + priceHTML + ' <span class="block text-[10px]">inkl. MVA</span></div>' +
       '  </div>' +
       '</label>';
   }).join("");
@@ -77,8 +85,8 @@
       '      <input id="color-freetext" type="text" placeholder="F.eks. NCS S 1502-Y eller Butinox-kode" class="w-full rounded-lg border border-outline-variant/50 px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"/>' +
       '    </div>' +
       '    <div class="flex items-end">' +
-      '      <a href="' + STORE_CONFIG.supplierColorUrl + '" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-primary font-semibold text-sm hover:text-vibrant-orange transition-colors">' +
-      '        <span class="material-symbols-outlined text-[18px]">open_in_new</span> Finn farge hos Butinox' +
+      '      <a href="' + escapeHTML(safePublicUrl(STORE_CONFIG.supplierColorUrl)) + '" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-primary font-semibold text-sm hover:text-vibrant-orange transition-colors">' +
+      '        <span class="material-symbols-outlined text-[18px]">open_in_new</span> Finn farge hos ' + escapeHTML(STORE_CONFIG.supplierColorLabel || "leverandøren") +
       '      </a>' +
       '    </div>' +
       '  </div>' +
@@ -87,26 +95,32 @@
       '</div>';
   }
 
+  var productMedia = product.imageUrl
+    ? '<img src="' + escapeHTML(safePublicUrl(product.imageUrl)) + '" alt="' + escapeHTML(product.name) + '" class="w-full h-full object-cover rounded-2xl"/>'
+    : '<span class="material-symbols-outlined ' + iconColor + ' text-[140px]" style="font-variation-settings:\'FILL\' 1;">' + escapeHTML(product.icon) + '</span>';
+
   root.innerHTML = '' +
     '<nav class="text-sm text-on-surface-variant mb-6" aria-label="Brødsmulesti">' +
     '  <a class="hover:text-primary" href="index.html">Nettbutikk</a> <span class="mx-1">/</span> ' +
-    '  <a class="hover:text-primary" href="kategori.html?type=' + product.category + '">' + CATEGORY_META[product.category].title + '</a> <span class="mx-1">/</span> ' +
-    '  <span class="text-deep-forest font-semibold">' + product.name + '</span>' +
+    '  <a class="hover:text-primary" href="kategori.html?type=' + encodeURIComponent(product.category) + '">' + escapeHTML(productCategoryMeta.title) + '</a> <span class="mx-1">/</span> ' +
+    '  <span class="text-deep-forest font-semibold">' + escapeHTML(product.name) + '</span>' +
     '</nav>' +
     '<div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">' +
     '  <div>' +
     '    <div class="aspect-square rounded-2xl bg-gradient-to-br ' + gradient + ' flex items-center justify-center sticky top-24">' +
-    '      <span class="material-symbols-outlined ' + iconColor + ' text-[140px]" style="font-variation-settings:\'FILL\' 1;">' + product.icon + '</span>' +
+    productMedia +
     '    </div>' +
     '  </div>' +
     '  <div>' +
-    '    <p class="uppercase tracking-wider text-xs font-label-sm text-primary mb-2">' + product.useArea + '</p>' +
-    '    <h1 class="font-headline-lg text-headline-lg text-deep-forest mb-3">' + product.name + '</h1>' +
-    '    <p class="text-on-surface-variant mb-6">' + product.shortDesc + '</p>' +
+    '    <p class="uppercase tracking-wider text-xs font-label-sm text-primary mb-2">' + escapeHTML(product.useArea) + '</p>' +
+    '    <h1 class="font-headline-lg text-headline-lg text-deep-forest mb-3">' + escapeHTML(product.name) + '</h1>' +
+    '    <p class="text-on-surface-variant mb-3">' + escapeHTML(product.shortDesc) + '</p>' +
+    (product.description ? '    <p class="text-sm text-on-surface-variant mb-6 whitespace-pre-line">' + escapeHTML(product.description) + '</p>' : '    <div class="mb-6"></div>') +
 
     '    <div class="mb-6">' +
     '      <h2 class="font-headline-md text-lg text-deep-forest mb-3">' + variantMeta.heading + '</h2>' +
     '      <div id="variant-options" class="grid grid-cols-3 gap-3">' + variantsHTML + '</div>' +
+    '      <p id="stock-summary" class="text-sm font-semibold mt-3"></p>' +
     '    </div>' +
 
     '    <div class="mb-2">' +
@@ -127,7 +141,7 @@
 
     '    <div class="mt-8" id="add-to-cart-area">' +
     '      <div class="flex items-center justify-between mb-3">' +
-    '        <span class="text-on-surface-variant text-sm">Pris for valgt variant</span>' +
+    '        <span class="text-on-surface-variant text-sm">Pris for valgt variant inkl. MVA</span>' +
     '        <span id="line-total" class="text-2xl font-bold text-primary"></span>' +
     '      </div>' +
     '      <button type="button" id="add-to-cart-btn" class="w-full bg-vibrant-orange hover:bg-primary-container text-white font-bold py-3.5 rounded-lg transition-all shadow-md shadow-deep-forest/10 flex items-center justify-center gap-2">' +
@@ -152,8 +166,18 @@
     return product.variants[idx];
   }
   function updateLineTotal() {
-    var total = selectedVariant().price * qty;
-    document.getElementById("line-total").textContent = formatNOK(total);
+    var variant = selectedVariant();
+    var total = variant.price * qty;
+    var totalEl = document.getElementById("line-total");
+    totalEl.innerHTML = variant.campaignPrice == null
+      ? formatNOK(total)
+      : '<span class="text-sm line-through text-on-surface-variant mr-2">' + formatNOK(variant.regularPrice * qty) + '</span>' + formatNOK(total);
+    var isRemote = isRemoteStock(variant.stockStatus);
+    var stockEl = document.getElementById("stock-summary");
+    stockEl.className = "text-sm font-semibold mt-3 " + (isRemote ? "text-primary" : "text-secondary");
+    stockEl.textContent = isRemote
+      ? "Fjernlager / bestillingsvare · " + (variant.expectedLeadTime || "Leveringstid oppgis av butikken")
+      : "På lager · " + (variant.expectedLeadTime || "Normalt klar for henting samme dag");
   }
   root.querySelectorAll('input[name="variant"]').forEach(function (input) {
     input.addEventListener("change", updateLineTotal);
@@ -189,10 +213,10 @@
     grid.innerHTML = list.map(function (c) {
       var isSelected = c.id === selectedColorId;
       return '' +
-        '<button type="button" data-color="' + c.id + '" class="text-center group">' +
-        '  <span class="block w-full aspect-square rounded-lg border-2 ' + (isSelected ? "border-vibrant-orange ring-2 ring-vibrant-orange/40" : "border-outline-variant/40") + ' transition-all" style="background-color:' + c.hex + '"></span>' +
-        '  <span class="block mt-1 text-[11px] font-semibold text-deep-forest leading-tight">' + c.name + '</span>' +
-        '  <span class="block text-[10px] text-on-surface-variant">' + c.code + '</span>' +
+        '<button type="button" data-color="' + escapeHTML(c.id) + '" class="text-center group">' +
+        '  <span class="block w-full aspect-square rounded-lg border-2 ' + (isSelected ? "border-vibrant-orange ring-2 ring-vibrant-orange/40" : "border-outline-variant/40") + ' transition-all" style="background-color:' + safeHexColor(c.hex) + '"></span>' +
+        '  <span class="block mt-1 text-[11px] font-semibold text-deep-forest leading-tight">' + escapeHTML(c.name) + '</span>' +
+        '  <span class="block text-[10px] text-on-surface-variant">' + escapeHTML(c.code) + '</span>' +
         '</button>';
     }).join("");
     grid.querySelectorAll("button").forEach(function (btn) {
@@ -260,15 +284,25 @@
     }
 
     var variant = selectedVariant();
+    var unitPriceIncVatOre = Number.isInteger(variant.priceOre) ? variant.priceOre : Math.round(variant.price * 100);
+    var unitVat = vatFromInclusiveOre(unitPriceIncVatOre, product.vatRateBasisPoints);
     addToCart({
       lineId: "line-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
       productId: product.id,
+      variantId: variant.id || null,
       productName: product.name,
       icon: product.icon,
+      imageUrl: product.imageUrl || null,
       tint: product.tint,
       variant: variant.label,
       variantPrice: variant.price,
+      unitPriceIncVatOre: unitPriceIncVatOre,
+      unitPriceExVatOre: unitVat.amountExVatOre,
+      regularPrice: variant.regularPrice || variant.price,
       variantLabel: variantMeta.label,
+      vatRateBasisPoints: product.vatRateBasisPoints,
+      stockStatus: normalizeStockStatus(variant.stockStatus),
+      expectedLeadTime: variant.expectedLeadTime || "Normalt klar for henting samme dag",
       qty: qty,
       colorLabel: colorLabel,
       comment: document.getElementById("comment").value.trim()
@@ -294,6 +328,7 @@
       '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">' + related.map(productCardHTML).join("") + '</div>';
   }
 })();
+});
 </script>
 </body>
 </html>

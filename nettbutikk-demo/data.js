@@ -1,11 +1,12 @@
 /*
- * Kulør Rognan - nettbutikk-demo
- * Statiske eksempeldata + handlekurv-hjelpere (localStorage).
- * Ingen database, ingen backend - kun til demonstrasjonsformål.
+ * Storefront model + demo fallback + handlekurv-hjelpere (localStorage).
+ * Supabase data replaces the fallback arrays at runtime when configured.
  */
 
-const CART_KEY = "kulor_demo_cart";
-const LAST_ORDER_KEY = "kulor_demo_last_order";
+const CART_KEY = "aema_storefront_cart";
+const LAST_ORDER_KEY = "aema_storefront_last_order";
+const LEGACY_CART_KEY = "kulor_demo_cart";
+const LEGACY_LAST_ORDER_KEY = "kulor_demo_last_order";
 
 /*
  * Variant-type styrer hvilket valg produktsiden viser og hvilken
@@ -32,6 +33,7 @@ const PRODUCTS = [
         tint: "inne",
         variantType: "spann",
         hasColor: true,
+        vatRateBasisPoints: 2500,
         variants: [
             { label: "0,68 l", price: 349 },
             { label: "2,7 l", price: 1090 },
@@ -49,6 +51,7 @@ const PRODUCTS = [
         tint: "inne",
         variantType: "spann",
         hasColor: true,
+        vatRateBasisPoints: 2500,
         variants: [
             { label: "0,68 l", price: 329 },
             { label: "2,7 l", price: 990 },
@@ -66,6 +69,7 @@ const PRODUCTS = [
         tint: "inne",
         variantType: "spann",
         hasColor: true,
+        vatRateBasisPoints: 2500,
         variants: [
             { label: "0,68 l", price: 399 },
             { label: "2,7 l", price: 1190 }
@@ -82,6 +86,7 @@ const PRODUCTS = [
         tint: "ute",
         variantType: "spann",
         hasColor: true,
+        vatRateBasisPoints: 2500,
         variants: [
             { label: "2,7 l", price: 1290 },
             { label: "9 l", price: 3490 }
@@ -98,6 +103,7 @@ const PRODUCTS = [
         tint: "ute",
         variantType: "spann",
         hasColor: true,
+        vatRateBasisPoints: 2500,
         variants: [
             { label: "0,68 l", price: 429 },
             { label: "2,7 l", price: 1090 }
@@ -114,6 +120,7 @@ const PRODUCTS = [
         tint: "ute",
         variantType: "spann",
         hasColor: false,
+        vatRateBasisPoints: 2500,
         variants: [
             { label: "2,7 l", price: 379 },
             { label: "9 l", price: 990 }
@@ -130,6 +137,7 @@ const PRODUCTS = [
         tint: "tilbehor",
         variantType: "bredde",
         hasColor: false,
+        vatRateBasisPoints: 2500,
         variants: [
             { label: "35 mm", price: 99 },
             { label: "50 mm", price: 129 },
@@ -147,6 +155,7 @@ const PRODUCTS = [
         tint: "tilbehor",
         variantType: "rullbredde",
         hasColor: false,
+        vatRateBasisPoints: 2500,
         variants: [
             { label: "100 mm – kort lugg (glatte flater)", price: 79 },
             { label: "180 mm – middels lugg (standard vegg og tak)", price: 99 },
@@ -164,6 +173,7 @@ const PRODUCTS = [
         tint: "tilbehor",
         variantType: "tape",
         hasColor: false,
+        vatRateBasisPoints: 2500,
         variants: [
             { label: "19 mm × 33 m", price: 49 },
             { label: "30 mm × 33 m", price: 69 },
@@ -181,6 +191,7 @@ const PRODUCTS = [
         tint: "tilbehor",
         variantType: "storrelse",
         hasColor: false,
+        vatRateBasisPoints: 2500,
         variants: [
             { label: "0,33 kg", price: 69 },
             { label: "1 kg", price: 129 },
@@ -228,13 +239,116 @@ function formatNOK(amount) {
     return amount.toLocaleString("nb-NO") + " kr";
 }
 
+function formatNOKOre(amountOre) {
+    var amount = amountOre / 100;
+    var hasOre = Math.abs(amountOre % 100) > 0;
+    return amount.toLocaleString("nb-NO", {
+        minimumFractionDigits: hasOre ? 2 : 0,
+        maximumFractionDigits: 2
+    }) + " kr";
+}
+
+function formatVatRate(rateBasisPoints) {
+    return (rateBasisPoints / 100).toLocaleString("nb-NO", {
+        minimumFractionDigits: rateBasisPoints % 100 ? 2 : 0,
+        maximumFractionDigits: 2
+    }) + " %";
+}
+
+function normalizeStockStatus(value) {
+    return value === "remote_stock" || value === "fjernlager" ? "remote_stock" : "in_stock";
+}
+
+function isRemoteStock(value) {
+    return normalizeStockStatus(value) === "remote_stock";
+}
+
+function safeHexColor(value) {
+    return /^#[0-9a-f]{6}$/i.test(value || "") ? value : "#ffffff";
+}
+
+function lineUnitPriceIncVatOre(line) {
+    if (Number.isInteger(line.unitPriceIncVatOre)) return line.unitPriceIncVatOre;
+    if (Number.isInteger(line.priceOre)) return line.priceOre;
+    var legacyPrice = line.variantPrice !== undefined ? line.variantPrice : line.price;
+    return Math.round((legacyPrice || 0) * 100);
+}
+
+function lineVatRateBasisPoints(line) {
+    return Number.isInteger(line.vatRateBasisPoints) ? line.vatRateBasisPoints : 2500;
+}
+
+function vatFromInclusiveOre(amountIncVatOre, rateBasisPoints) {
+    var amount = Math.max(0, Math.round(amountIncVatOre));
+    var rate = Math.max(0, Math.round(rateBasisPoints));
+    var amountExVatOre = Math.round(amount * 10000 / (10000 + rate));
+    return {
+        amountExVatOre: amountExVatOre,
+        vatOre: amount - amountExVatOre,
+        amountIncVatOre: amount
+    };
+}
+
+function cartLineVatAmounts(line) {
+    var quantity = Math.max(1, Math.round(line.qty || 1));
+    var unitPriceIncVatOre = lineUnitPriceIncVatOre(line);
+    var totals = vatFromInclusiveOre(unitPriceIncVatOre * quantity, lineVatRateBasisPoints(line));
+    totals.unitPriceIncVatOre = unitPriceIncVatOre;
+    totals.unitPriceExVatOre = vatFromInclusiveOre(unitPriceIncVatOre, lineVatRateBasisPoints(line)).amountExVatOre;
+    totals.vatRateBasisPoints = lineVatRateBasisPoints(line);
+    totals.quantity = quantity;
+    return totals;
+}
+
+function orderItemSnapshot(line) {
+    var amounts = cartLineVatAmounts(line);
+    return Object.assign({}, line, {
+        productName: line.productName,
+        quantity: amounts.quantity,
+        unitPriceIncVatOre: amounts.unitPriceIncVatOre,
+        unitPriceExVatOre: amounts.unitPriceExVatOre,
+        vatRateBasisPoints: amounts.vatRateBasisPoints,
+        lineAmountExVatOre: amounts.amountExVatOre,
+        lineVatOre: amounts.vatOre,
+        lineAmountIncVatOre: amounts.amountIncVatOre
+    });
+}
+
+function cartVatSummary(cart) {
+    var byRate = {};
+    var summary = (cart || getCart()).reduce(function (totals, line) {
+        var amounts = cartLineVatAmounts(line);
+        totals.subtotalExVatOre += amounts.amountExVatOre;
+        totals.vatTotalOre += amounts.vatOre;
+        totals.totalIncVatOre += amounts.amountIncVatOre;
+
+        var rateKey = String(amounts.vatRateBasisPoints);
+        if (!byRate[rateKey]) {
+            byRate[rateKey] = {
+                vatRateBasisPoints: amounts.vatRateBasisPoints,
+                amountExVatOre: 0,
+                vatOre: 0,
+                amountIncVatOre: 0
+            };
+        }
+        byRate[rateKey].amountExVatOre += amounts.amountExVatOre;
+        byRate[rateKey].vatOre += amounts.vatOre;
+        byRate[rateKey].amountIncVatOre += amounts.amountIncVatOre;
+        return totals;
+    }, { subtotalExVatOre: 0, vatTotalOre: 0, totalIncVatOre: 0 });
+
+    summary.vatBreakdown = Object.keys(byRate).map(function (key) { return byRate[key]; })
+        .sort(function (a, b) { return a.vatRateBasisPoints - b.vatRateBasisPoints; });
+    return summary;
+}
+
 function getProductById(id) {
     return PRODUCTS.find(function (p) { return p.id === id; });
 }
 
 function getCart() {
     try {
-        return JSON.parse(localStorage.getItem(CART_KEY)) || [];
+        return JSON.parse(localStorage.getItem(CART_KEY) || localStorage.getItem(LEGACY_CART_KEY)) || [];
     } catch (e) {
         return [];
     }
@@ -242,6 +356,7 @@ function getCart() {
 
 function saveCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    localStorage.removeItem(LEGACY_CART_KEY);
     updateCartBadge();
 }
 
@@ -269,11 +384,11 @@ function updateCartQty(lineId, qty) {
 }
 
 function cartLineTotal(line) {
-    return line.variantPrice * line.qty;
+    return cartLineVatAmounts(line).amountIncVatOre / 100;
 }
 
 function cartTotal(cart) {
-    return (cart || getCart()).reduce(function (sum, line) { return sum + cartLineTotal(line); }, 0);
+    return cartVatSummary(cart).totalIncVatOre / 100;
 }
 
 function cartCount(cart) {
@@ -291,6 +406,7 @@ function updateCartBadge() {
 
 function clearCart() {
     localStorage.removeItem(CART_KEY);
+    localStorage.removeItem(LEGACY_CART_KEY);
     updateCartBadge();
 }
 
@@ -301,25 +417,72 @@ var TINT_GRADIENTS = {
 };
 
 function productCardHTML(product) {
-    var iconColor = product.tint === "tilbehor" ? "text-deep-forest" : "text-white";
+    var safeTint = Object.prototype.hasOwnProperty.call(TINT_GRADIENTS, product.tint) ? product.tint : "tilbehor";
+    var iconColor = safeTint === "tilbehor" ? "text-deep-forest" : "text-white";
     var fromPrice = product.variants[0].price;
-    var ctaText = VARIANT_TYPES[product.variantType].heading + (product.hasColor ? " og farge" : "");
+    var variantMeta = VARIANT_TYPES[product.variantType] || VARIANT_TYPES.storrelse;
+    var ctaText = variantMeta.heading + (product.hasColor ? " og farge" : "");
+    var media = product.imageUrl
+        ? '<img src="' + escapeHTML(safePublicUrl(product.imageUrl)) + '" alt="' + escapeHTML(product.name) + '" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>'
+        : '<span class="material-symbols-outlined ' + iconColor + ' text-[64px] group-hover:scale-110 transition-transform duration-300" style="font-variation-settings:\'FILL\' 1;">' + escapeHTML(product.icon) + '</span>';
+    var hasRemoteStock = product.variants.some(function (variant) { return isRemoteStock(variant.stockStatus); });
+    var hasLocalStock = product.variants.some(function (variant) { return !isRemoteStock(variant.stockStatus); });
+    var stock = hasRemoteStock && hasLocalStock
+        ? '<span class="text-[11px] font-semibold text-primary">Lagerstatus varierer</span>'
+        : hasRemoteStock
+            ? '<span class="text-[11px] font-semibold text-primary">Fjernlager · ' + escapeHTML(product.variants[0].expectedLeadTime) + '</span>'
+            : '<span class="text-[11px] font-semibold text-secondary">På lager</span>';
     return '' +
-        '<a href="produkt.html?id=' + product.id + '" class="group flex flex-col bg-white rounded-xl overflow-hidden shadow-sm shadow-deep-forest/5 hover:shadow-md transition-all duration-300 border border-outline-variant/20">' +
-        '  <div class="aspect-[4/3] bg-gradient-to-br ' + TINT_GRADIENTS[product.tint] + ' flex items-center justify-center">' +
-        '    <span class="material-symbols-outlined ' + iconColor + ' text-[64px] group-hover:scale-110 transition-transform duration-300" style="font-variation-settings:\'FILL\' 1;">' + product.icon + '</span>' +
+        '<a href="produkt.html?id=' + encodeURIComponent(product.id) + '" class="group flex flex-col bg-white rounded-xl overflow-hidden shadow-sm shadow-deep-forest/5 hover:shadow-md transition-all duration-300 border border-outline-variant/20">' +
+        '  <div class="aspect-[4/3] bg-gradient-to-br ' + TINT_GRADIENTS[safeTint] + ' flex items-center justify-center">' +
+        media +
         '  </div>' +
         '  <div class="p-5 flex flex-col flex-1">' +
-        '    <p class="uppercase tracking-wider text-[11px] font-label-sm text-primary mb-1">' + product.useArea + '</p>' +
-        '    <h3 class="font-headline-md text-lg text-deep-forest mb-1">' + product.name + '</h3>' +
-        '    <p class="text-sm text-on-surface-variant mb-4 flex-1 line-clamp-2">' + product.shortDesc + '</p>' +
+        '    <p class="uppercase tracking-wider text-[11px] font-label-sm text-primary mb-1">' + escapeHTML(product.useArea) + '</p>' +
+        '    <h3 class="font-headline-md text-lg text-deep-forest mb-1">' + escapeHTML(product.name) + '</h3>' +
+        '    <p class="text-sm text-on-surface-variant mb-4 flex-1 line-clamp-2">' + escapeHTML(product.shortDesc) + '</p>' +
         '    <div class="flex items-center justify-between mb-3">' +
-        '      <span class="text-xs text-on-surface-variant">Pris fra</span>' +
-        '      <span class="font-bold text-primary text-lg">' + formatNOK(fromPrice) + '</span>' +
+        '      <span>' + stock + '</span>' +
+        '      <span class="font-bold text-primary text-lg">' + formatNOK(fromPrice) + ' <small class="block text-[10px] font-normal text-on-surface-variant text-right">inkl. MVA</small></span>' +
         '    </div>' +
-        '    <span class="w-full text-center inline-flex items-center justify-center gap-1 bg-primary/10 group-hover:bg-vibrant-orange group-hover:text-white text-primary text-sm font-semibold py-2.5 px-3 rounded-lg transition-colors">' + ctaText + ' <span class="material-symbols-outlined text-[16px]">arrow_forward</span></span>' +
+        '    <span class="w-full text-center inline-flex items-center justify-center gap-1 bg-primary/10 group-hover:bg-vibrant-orange group-hover:text-white text-primary text-sm font-semibold py-2.5 px-3 rounded-lg transition-colors">' + escapeHTML(ctaText) + ' <span class="material-symbols-outlined text-[16px]">arrow_forward</span></span>' +
         '  </div>' +
         '</a>';
 }
 
 document.addEventListener("DOMContentLoaded", updateCartBadge);
+
+var STOREFRONT_SOURCE = "demo";
+var STOREFRONT_ERROR = null;
+
+function applyStorefrontCatalog(catalog) {
+    Object.keys(catalog.store || {}).forEach(function (key) {
+        var value = catalog.store[key];
+        if (value !== null && value !== undefined) STORE_CONFIG[key] = value;
+    });
+
+    PRODUCTS.splice.apply(PRODUCTS, [0, PRODUCTS.length].concat(catalog.products || []));
+    FEATURED_PRODUCT_IDS.splice.apply(FEATURED_PRODUCT_IDS, [0, FEATURED_PRODUCT_IDS.length].concat(catalog.featuredProductIds || []));
+    COLORS.splice.apply(COLORS, [0, COLORS.length].concat(catalog.colors || []));
+
+    Object.keys(CATEGORY_META).forEach(function (key) { delete CATEGORY_META[key]; });
+    Object.keys(catalog.categories || {}).forEach(function (key) {
+        CATEGORY_META[key] = catalog.categories[key];
+    });
+
+    STOREFRONT_SOURCE = catalog.source || "supabase";
+    if (window.KulorLayout && typeof window.KulorLayout.refreshStoreIdentity === "function") {
+        window.KulorLayout.refreshStoreIdentity();
+    }
+}
+
+var STOREFRONT_READY = window.StorefrontRepository
+    ? window.StorefrontRepository.loadCatalog().then(function (catalog) {
+        applyStorefrontCatalog(catalog);
+        return { source: STOREFRONT_SOURCE };
+    }).catch(function (error) {
+        STOREFRONT_ERROR = error;
+        console.info("Bruker innebygde demo-data:", error.message);
+        return { source: "demo", error: error };
+    })
+    : Promise.resolve({ source: "demo" });

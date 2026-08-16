@@ -18,7 +18,8 @@
 <script src="../assets/tailwind-config.js"></script>
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
-<script src="../assets/store-config.js"></script>
+  <script src="../config/stores/kulor-rognan.js"></script>
+  <script src="../assets/store-config.js"></script>
 <script src="../assets/layout.js"></script>
 <script>KulorLayout.injectDemoBanner();</script>
 <script>KulorLayout.injectHeader("../", "nettbutikk", true);</script>
@@ -68,8 +69,16 @@
       <div class="bg-white rounded-xl border border-outline-variant/30 p-6 lg:sticky lg:top-24">
         <h2 class="font-headline-md text-lg text-deep-forest mb-4">Din ordre</h2>
         <div id="summary-lines" class="space-y-3 mb-4"></div>
-        <div class="border-t border-outline-variant/20 pt-4 flex items-center justify-between">
-          <span class="font-semibold text-deep-forest">Totalsum</span>
+        <div class="border-t border-outline-variant/20 pt-4 flex items-center justify-between text-sm text-on-surface-variant">
+          <span>Sum eks. MVA</span>
+          <span id="summary-subtotal-ex-vat"></span>
+        </div>
+        <div class="pt-2 flex items-center justify-between text-sm text-on-surface-variant">
+          <span>MVA inkludert</span>
+          <span id="summary-vat-total"></span>
+        </div>
+        <div class="pt-3 mt-3 border-t border-outline-variant/20 flex items-center justify-between">
+          <span class="font-semibold text-deep-forest">Total inkl. MVA</span>
           <span id="summary-total" class="font-bold text-primary text-xl"></span>
         </div>
         <p class="text-xs text-on-surface-variant mt-3 flex items-center gap-1">
@@ -98,10 +107,13 @@
 </div>
 
 <script>KulorLayout.injectFooter("../");</script>
+<script src="../assets/supabase-storefront.js"></script>
 <script src="data.js"></script>
 <script>
-  document.getElementById("pickup-store-line").textContent = STORE_CONFIG.name + ", " + STORE_CONFIG.address;
-  document.getElementById("pickup-store-summary").textContent = "Hentes hos " + STORE_CONFIG.name + ", " + STORE_CONFIG.address;
+  STOREFRONT_READY.then(function () {
+    document.getElementById("pickup-store-line").textContent = STORE_CONFIG.name + ", " + STORE_CONFIG.address;
+    document.getElementById("pickup-store-summary").textContent = "Hentes hos " + STORE_CONFIG.name + ", " + STORE_CONFIG.address;
+  });
 
   var cart = getCart();
   if (!cart.length) {
@@ -112,13 +124,18 @@
       return '' +
         '<div class="flex justify-between gap-3 text-sm">' +
         '  <div class="min-w-0">' +
-        '    <p class="font-semibold text-deep-forest truncate">' + line.qty + '&times; ' + line.productName + '</p>' +
-        '    <p class="text-on-surface-variant text-xs">' + line.variantLabel + ': ' + line.variant + (line.colorLabel ? " · " + line.colorLabel : "") + '</p>' +
+        '    <p class="font-semibold text-deep-forest truncate">' + line.qty + '&times; ' + escapeHTML(line.productName) + '</p>' +
+        '    <p class="text-on-surface-variant text-xs">' + escapeHTML(line.variantLabel) + ': ' + escapeHTML(line.variant) + (line.colorLabel ? " · " + escapeHTML(line.colorLabel) : "") + '</p>' +
+        '    <p class="text-xs font-semibold ' + (isRemoteStock(line.stockStatus) ? "text-primary" : "text-secondary") + '">' +
+        (isRemoteStock(line.stockStatus) ? "Fjernlager / bestillingsvare" : "På lager") + ' · ' + escapeHTML(line.expectedLeadTime || "Normalt klar for henting samme dag") + '</p>' +
         '  </div>' +
-        '  <span class="font-semibold text-deep-forest shrink-0">' + formatNOK(cartLineTotal(line)) + '</span>' +
+        '  <span class="font-semibold text-deep-forest shrink-0">' + formatNOKOre(cartLineVatAmounts(line).amountIncVatOre) + '</span>' +
         '</div>';
     }).join("");
-    document.getElementById("summary-total").textContent = formatNOK(cartTotal(cart));
+    var checkoutVatSummary = cartVatSummary(cart);
+    document.getElementById("summary-subtotal-ex-vat").textContent = formatNOKOre(checkoutVatSummary.subtotalExVatOre);
+    document.getElementById("summary-vat-total").textContent = formatNOKOre(checkoutVatSummary.vatTotalOre);
+    document.getElementById("summary-total").textContent = formatNOKOre(checkoutVatSummary.totalIncVatOre);
   }
 
   document.getElementById("checkout-form").addEventListener("submit", function (e) {
@@ -138,11 +155,16 @@
   });
 
   document.getElementById("demo-modal-continue").addEventListener("click", function () {
+    var orderVatSummary = cartVatSummary(cart);
     var order = {
       orderNumber: "KR-" + (1000 + Math.floor(Math.random() * 9000)),
       date: new Date().toISOString(),
-      items: cart,
-      total: cartTotal(cart),
+      items: cart.map(orderItemSnapshot),
+      subtotalExVatOre: orderVatSummary.subtotalExVatOre,
+      vatTotalOre: orderVatSummary.vatTotalOre,
+      totalIncVatOre: orderVatSummary.totalIncVatOre,
+      vatBreakdown: orderVatSummary.vatBreakdown,
+      total: orderVatSummary.totalIncVatOre / 100,
       customer: {
         name: document.getElementById("cf-name").value.trim(),
         email: document.getElementById("cf-email").value.trim(),

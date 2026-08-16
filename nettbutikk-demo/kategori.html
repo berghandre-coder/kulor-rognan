@@ -19,7 +19,8 @@
 <script src="../assets/tailwind-config.js"></script>
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
-<script src="../assets/store-config.js"></script>
+  <script src="../config/stores/kulor-rognan.js"></script>
+  <script src="../assets/store-config.js"></script>
 <script src="../assets/layout.js"></script>
 <script>KulorLayout.injectDemoBanner();</script>
 <script>
@@ -50,13 +51,15 @@
 </main>
 
 <script>KulorLayout.injectFooter("../");</script>
+<script src="../assets/supabase-storefront.js"></script>
 <script src="data.js"></script>
 <script>
+STOREFRONT_READY.then(function () {
   var meta = CATEGORY_META[typeKey] || CATEGORY_META.inne;
   document.getElementById("category-title").textContent = meta.title;
   document.getElementById("crumb-title").textContent = meta.title;
   document.getElementById("category-intro").textContent = meta.intro;
-  document.title = meta.title + " (demo) - Kulør Rognan";
+  document.title = meta.title + " - " + STORE_CONFIG.name;
 
   var activeSub = "Alle";
   var chipsWrap = document.getElementById("subcategory-chips");
@@ -72,7 +75,7 @@
   function renderChips() {
     var subs = ["Alle"].concat(meta.subcategories);
     chipsWrap.innerHTML = subs.map(function (s) {
-      return '<button type="button" data-sub="' + s + '" class="px-4 py-2 rounded-full border text-sm font-semibold transition-colors ' + chipClasses(s === activeSub) + '">' + s + '</button>';
+      return '<button type="button" data-sub="' + escapeHTML(s) + '" class="px-4 py-2 rounded-full border text-sm font-semibold transition-colors ' + chipClasses(s === activeSub) + '">' + escapeHTML(s) + '</button>';
     }).join("");
     chipsWrap.querySelectorAll("button").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -94,6 +97,7 @@
 
   renderChips();
   renderGrid();
+});
 </script>
 </body>
 </html>

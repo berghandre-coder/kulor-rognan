@@ -18,7 +18,8 @@
 <script src="../assets/tailwind-config.js"></script>
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
-<script src="../assets/store-config.js"></script>
+  <script src="../config/stores/kulor-rognan.js"></script>
+  <script src="../assets/store-config.js"></script>
 <script src="../assets/layout.js"></script>
 <script>KulorLayout.injectDemoBanner();</script>
 <script>KulorLayout.injectHeader("../", "nettbutikk", true);</script>
@@ -31,10 +32,12 @@
 </main>
 
 <script>KulorLayout.injectFooter("../");</script>
+<script src="../assets/supabase-storefront.js"></script>
 <script src="data.js"></script>
 <script>
+STOREFRONT_READY.then(function () {
 (function () {
-  var raw = localStorage.getItem(LAST_ORDER_KEY);
+  var raw = localStorage.getItem(LAST_ORDER_KEY) || localStorage.getItem(LEGACY_LAST_ORDER_KEY);
   if (!raw) {
     document.getElementById("no-order").classList.remove("hidden");
     return;
@@ -42,15 +45,21 @@
   var order = JSON.parse(raw);
   var root = document.getElementById("confirmation-root");
   var dateStr = new Date(order.date).toLocaleDateString("nb-NO", { day: "numeric", month: "long", year: "numeric" });
+  var calculatedVatSummary = cartVatSummary(order.items);
+  var orderSubtotalExVatOre = Number.isInteger(order.subtotalExVatOre) ? order.subtotalExVatOre : calculatedVatSummary.subtotalExVatOre;
+  var orderVatTotalOre = Number.isInteger(order.vatTotalOre) ? order.vatTotalOre : calculatedVatSummary.vatTotalOre;
+  var orderTotalIncVatOre = Number.isInteger(order.totalIncVatOre) ? order.totalIncVatOre : calculatedVatSummary.totalIncVatOre;
 
   var linesHTML = order.items.map(function (line) {
     return '' +
       '<div class="flex justify-between gap-3 py-3 border-b border-outline-variant/15 last:border-0">' +
       '  <div class="min-w-0">' +
-      '    <p class="font-semibold text-deep-forest">' + line.qty + '&times; ' + line.productName + '</p>' +
-      '    <p class="text-sm text-on-surface-variant">' + line.variantLabel + ': ' + line.variant + (line.colorLabel ? " · " + line.colorLabel : "") + '</p>' +
+      '    <p class="font-semibold text-deep-forest">' + line.qty + '&times; ' + escapeHTML(line.productName) + '</p>' +
+      '    <p class="text-sm text-on-surface-variant">' + escapeHTML(line.variantLabel) + ': ' + escapeHTML(line.variant) + (line.colorLabel ? " · " + escapeHTML(line.colorLabel) : "") + '</p>' +
+      '    <p class="text-xs font-semibold ' + (isRemoteStock(line.stockStatus) ? "text-primary" : "text-secondary") + '">' +
+      (isRemoteStock(line.stockStatus) ? "Fjernlager / bestillingsvare" : "På lager") + ' · ' + escapeHTML(line.expectedLeadTime || "Normalt klar for henting samme dag") + '</p>' +
       '  </div>' +
-      '  <span class="font-semibold text-deep-forest shrink-0">' + formatNOK(line.variantPrice * line.qty) + '</span>' +
+      '  <span class="font-semibold text-deep-forest shrink-0 text-right">' + formatNOKOre(Number.isInteger(line.lineAmountIncVatOre) ? line.lineAmountIncVatOre : cartLineVatAmounts(line).amountIncVatOre) + '<small class="block text-[10px] font-normal text-on-surface-variant">inkl. ' + formatVatRate(lineVatRateBasisPoints(line)) + ' MVA</small></span>' +
       '</div>';
   }).join("");
 
@@ -67,7 +76,7 @@
     '  <div class="flex flex-wrap justify-between gap-4 mb-4 pb-4 border-b border-outline-variant/15">' +
     '    <div>' +
     '      <p class="text-xs text-on-surface-variant uppercase tracking-wide">Ordrenummer</p>' +
-    '      <p class="font-bold text-deep-forest">' + order.orderNumber + '</p>' +
+    '      <p class="font-bold text-deep-forest">' + escapeHTML(order.orderNumber) + '</p>' +
     '    </div>' +
     '    <div>' +
     '      <p class="text-xs text-on-surface-variant uppercase tracking-wide">Dato</p>' +
@@ -79,17 +88,25 @@
     '    </div>' +
     '  </div>' +
     '  <div class="mb-4">' + linesHTML + '</div>' +
-    '  <div class="flex items-center justify-between pt-2">' +
-    '    <span class="font-semibold text-deep-forest">Betalt beløp</span>' +
-    '    <span class="font-bold text-primary text-2xl">' + formatNOK(order.total) + '</span>' +
+    '  <div class="flex items-center justify-between pt-2 text-sm text-on-surface-variant">' +
+    '    <span>Sum eks. MVA</span>' +
+    '    <span>' + formatNOKOre(orderSubtotalExVatOre) + '</span>' +
+    '  </div>' +
+    '  <div class="flex items-center justify-between pt-2 text-sm text-on-surface-variant">' +
+    '    <span>MVA inkludert</span>' +
+    '    <span>' + formatNOKOre(orderVatTotalOre) + '</span>' +
+    '  </div>' +
+    '  <div class="flex items-center justify-between pt-3 mt-3 border-t border-outline-variant/20">' +
+    '    <span class="font-semibold text-deep-forest">Total inkl. MVA</span>' +
+    '    <span class="font-bold text-primary text-2xl">' + formatNOKOre(orderTotalIncVatOre) + '</span>' +
     '  </div>' +
     '</div>' +
 
     '<div class="bg-surface-container rounded-xl p-6 mb-8">' +
     '  <h2 class="font-headline-md text-lg text-deep-forest mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary">storefront</span> Hentested</h2>' +
-    '  <p class="text-on-surface-variant">' + STORE_CONFIG.name + ', ' + STORE_CONFIG.address + '</p>' +
-    '  <p class="text-on-surface-variant mt-1">Bestilt av: ' + order.customer.name + ' &middot; ' + order.customer.email + ' &middot; ' + order.customer.phone + '</p>' +
-    (order.customer.comment ? '  <p class="text-sm text-on-surface-variant italic mt-2">Kommentar: "' + order.customer.comment + '"</p>' : '') +
+    '  <p class="text-on-surface-variant">' + escapeHTML(STORE_CONFIG.name) + ', ' + escapeHTML(STORE_CONFIG.address) + '</p>' +
+    '  <p class="text-on-surface-variant mt-1">Bestilt av: ' + escapeHTML(order.customer.name) + ' &middot; ' + escapeHTML(order.customer.email) + ' &middot; ' + escapeHTML(order.customer.phone) + '</p>' +
+    (order.customer.comment ? '  <p class="text-sm text-on-surface-variant italic mt-2">Kommentar: "' + escapeHTML(order.customer.comment) + '"</p>' : '') +
     '</div>' +
 
     '<div class="flex flex-col sm:flex-row gap-3 justify-center mb-10">' +
@@ -98,6 +115,7 @@
     '</div>'
   );
 })();
+});
 </script>
 </body>
 </html>

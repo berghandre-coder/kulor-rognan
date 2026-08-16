@@ -18,7 +18,8 @@
 <script src="../assets/tailwind-config.js"></script>
 </head>
 <body class="bg-surface-cream text-on-surface font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
-<script src="../assets/store-config.js"></script>
+  <script src="../config/stores/kulor-rognan.js"></script>
+  <script src="../assets/store-config.js"></script>
 <script src="../assets/layout.js"></script>
 <script>KulorLayout.injectDemoBanner();</script>
 <script>
@@ -42,8 +43,16 @@
   </div>
 
   <div id="cart-summary" class="bg-white rounded-xl border border-outline-variant/30 p-6">
-    <div class="flex items-center justify-between text-lg mb-1">
-      <span class="font-semibold text-deep-forest">Totalsum</span>
+    <div class="flex items-center justify-between text-sm mb-1 text-on-surface-variant">
+      <span>Sum eks. MVA</span>
+      <span id="cart-subtotal-ex-vat"></span>
+    </div>
+    <div class="flex items-center justify-between text-sm mb-2 text-on-surface-variant">
+      <span>MVA inkludert</span>
+      <span id="cart-vat-total"></span>
+    </div>
+    <div class="flex items-center justify-between text-lg mb-1 pt-2 border-t border-outline-variant/20">
+      <span class="font-semibold text-deep-forest">Total inkl. MVA</span>
       <span id="cart-total" class="font-bold text-primary text-2xl"></span>
     </div>
     <p class="text-xs text-on-surface-variant mb-5">Ingen frakt &ndash; kun klikk og hent i butikk.</p>
@@ -55,9 +64,12 @@
 </main>
 
 <script>KulorLayout.injectFooter("../");</script>
+<script src="../assets/supabase-storefront.js"></script>
 <script src="data.js"></script>
 <script>
-  document.getElementById("pickup-store-line").textContent = STORE_CONFIG.name + ", " + STORE_CONFIG.address;
+  STOREFRONT_READY.then(function () {
+    document.getElementById("pickup-store-line").textContent = STORE_CONFIG.name + ", " + STORE_CONFIG.address;
+  });
 
   function render() {
     var cart = getCart();
@@ -77,32 +89,39 @@
     var iconColor = { inne: "text-white", ute: "text-white", tilbehor: "text-deep-forest" };
 
     itemsWrap.innerHTML = cart.map(function (line) {
+      var safeTint = Object.prototype.hasOwnProperty.call(TINT_GRADIENTS, line.tint) ? line.tint : "tilbehor";
+      var safeQuantity = Math.max(1, Math.round(Number(line.qty) || 1));
       return '' +
         '<div class="flex gap-4 bg-white rounded-xl border border-outline-variant/30 p-4">' +
-        '  <div class="w-20 h-20 shrink-0 rounded-lg bg-gradient-to-br ' + TINT_GRADIENTS[line.tint] + ' flex items-center justify-center">' +
-        '    <span class="material-symbols-outlined ' + iconColor[line.tint] + ' text-[32px]" style="font-variation-settings:\'FILL\' 1;">' + line.icon + '</span>' +
+        '  <div class="w-20 h-20 shrink-0 rounded-lg bg-gradient-to-br ' + TINT_GRADIENTS[safeTint] + ' flex items-center justify-center">' +
+        '    <span class="material-symbols-outlined ' + iconColor[safeTint] + ' text-[32px]" style="font-variation-settings:\'FILL\' 1;">' + escapeHTML(line.icon) + '</span>' +
         '  </div>' +
         '  <div class="flex-1 min-w-0">' +
         '    <div class="flex justify-between gap-2">' +
-        '      <h3 class="font-bold text-deep-forest truncate">' + line.productName + '</h3>' +
-        '      <button data-remove="' + line.lineId + '" class="text-on-surface-variant hover:text-error shrink-0" aria-label="Fjern vare"><span class="material-symbols-outlined text-[20px]">delete</span></button>' +
+        '      <h3 class="font-bold text-deep-forest truncate">' + escapeHTML(line.productName) + '</h3>' +
+        '      <button data-remove="' + escapeHTML(line.lineId) + '" class="text-on-surface-variant hover:text-error shrink-0" aria-label="Fjern vare"><span class="material-symbols-outlined text-[20px]">delete</span></button>' +
         '    </div>' +
-        '    <p class="text-sm text-on-surface-variant">' + line.variantLabel + ': ' + line.variant + '</p>' +
-        (line.colorLabel ? '    <p class="text-sm text-on-surface-variant">Farge: ' + line.colorLabel + '</p>' : '') +
-        (line.comment ? '    <p class="text-xs text-on-surface-variant italic mt-1">"' + line.comment + '"</p>' : '') +
+        '    <p class="text-sm text-on-surface-variant">' + escapeHTML(line.variantLabel) + ': ' + escapeHTML(line.variant) + '</p>' +
+        '    <p class="text-xs font-semibold ' + (isRemoteStock(line.stockStatus) ? "text-primary" : "text-secondary") + '">' +
+        (isRemoteStock(line.stockStatus) ? "Fjernlager / bestillingsvare" : "På lager") + ' · ' + escapeHTML(line.expectedLeadTime || "Normalt klar for henting samme dag") + '</p>' +
+        (line.colorLabel ? '    <p class="text-sm text-on-surface-variant">Farge: ' + escapeHTML(line.colorLabel) + '</p>' : '') +
+        (line.comment ? '    <p class="text-xs text-on-surface-variant italic mt-1">"' + escapeHTML(line.comment) + '"</p>' : '') +
         '    <div class="flex items-center justify-between mt-2">' +
         '      <div class="inline-flex items-center border border-outline-variant/40 rounded-lg overflow-hidden">' +
-        '        <button data-qty-minus="' + line.lineId + '" class="w-8 h-8 hover:bg-surface-container text-deep-forest font-bold">&minus;</button>' +
-        '        <span class="w-8 text-center text-sm font-semibold">' + line.qty + '</span>' +
-        '        <button data-qty-plus="' + line.lineId + '" class="w-8 h-8 hover:bg-surface-container text-deep-forest font-bold">+</button>' +
+        '        <button data-qty-minus="' + escapeHTML(line.lineId) + '" class="w-8 h-8 hover:bg-surface-container text-deep-forest font-bold">&minus;</button>' +
+        '        <span class="w-8 text-center text-sm font-semibold">' + safeQuantity + '</span>' +
+        '        <button data-qty-plus="' + escapeHTML(line.lineId) + '" class="w-8 h-8 hover:bg-surface-container text-deep-forest font-bold">+</button>' +
         '      </div>' +
-        '      <span class="font-bold text-primary">' + formatNOK(cartLineTotal(line)) + '</span>' +
+        '      <span class="font-bold text-primary text-right">' + formatNOKOre(cartLineVatAmounts(line).amountIncVatOre) + '<small class="block text-[10px] font-normal text-on-surface-variant">inkl. ' + formatVatRate(lineVatRateBasisPoints(line)) + ' MVA</small></span>' +
         '    </div>' +
         '  </div>' +
         '</div>';
     }).join("");
 
-    document.getElementById("cart-total").textContent = formatNOK(cartTotal(cart));
+    var vatSummary = cartVatSummary(cart);
+    document.getElementById("cart-subtotal-ex-vat").textContent = formatNOKOre(vatSummary.subtotalExVatOre);
+    document.getElementById("cart-vat-total").textContent = formatNOKOre(vatSummary.vatTotalOre);
+    document.getElementById("cart-total").textContent = formatNOKOre(vatSummary.totalIncVatOre);
 
     itemsWrap.querySelectorAll("[data-remove]").forEach(function (btn) {
       btn.addEventListener("click", function () {

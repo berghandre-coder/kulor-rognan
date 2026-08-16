@@ -1,386 +1,548 @@
-/*
- * Kulør Rognan - admin-demo
- * Kun demonstrasjon: ordre og produktendringer lever i minnet for denne
- * øktenen og lagres ikke permanent noe sted.
- */
+/* Kulør Rognan catalog admin. All persistence goes through authenticated
+ * Supabase requests and database RLS; there is no demo/minne-lagring here. */
+(function () {
+    "use strict";
 
-var DEMO_ORDERS = [
-    {
-        id: "KR-1042",
-        status: "ny",
-        customer: { name: "Kari Nordmann", email: "kari.nordmann@epost.no", phone: "+47 912 34 567" },
-        items: [{ productName: "Kulør Interiør Matt", variantLabel: "Spannstørrelse", variant: "9 l", qty: 1, colorLabel: "Varm Beige (S 1010-Y30R)", price: 2990 }],
-        comment: "Ønsker avhenting fredag ettermiddag.",
-        createdAt: "2026-08-06T09:12:00"
-    },
-    {
-        id: "KR-1041",
-        status: "under_blanding",
-        customer: { name: "Ola Haugen", email: "ola.haugen@epost.no", phone: "+47 924 55 112" },
-        items: [{ productName: "Kulør Fasademaling", variantLabel: "Spannstørrelse", variant: "9 l", qty: 2, colorLabel: "Skifergrå (S 6502-B)", price: 3490 }],
-        comment: "",
-        createdAt: "2026-08-05T11:40:00"
-    },
-    {
-        id: "KR-1040",
-        status: "klar",
-        customer: { name: "Silje Antonsen", email: "silje.a@epost.no", phone: "+47 400 12 345" },
-        items: [{ productName: "Kulør Terrassebeis", variantLabel: "Spannstørrelse", variant: "2,7 l", qty: 1, colorLabel: "Fargekode (kunde): NCS S 2010-Y50R (fra Butinox fargevelger)", price: 1090 }],
-        comment: "Ring gjerne når den er klar.",
-        createdAt: "2026-08-04T14:05:00"
-    },
-    {
-        id: "KR-1039",
-        status: "utlevert",
-        customer: { name: "Per Strand", email: "per.strand@epost.no", phone: "+47 977 88 221" },
-        items: [
-            { productName: "Kulør Snekkermaling Innendørs", variantLabel: "Spannstørrelse", variant: "2,7 l", qty: 1, colorLabel: "Kritthvit (S 0502-Y)", price: 1190 },
-            { productName: "Kulør Flatpensel", variantLabel: "Bredde", variant: "50 mm", qty: 1, colorLabel: null, price: 129 }
-        ],
-        comment: "",
-        createdAt: "2026-08-03T10:20:00"
-    },
-    {
-        id: "KR-1038",
-        status: "ny",
-        customer: { name: "Mona Iversen", email: "mona.iversen@epost.no", phone: "+47 936 21 004" },
-        items: [{ productName: "Kulør Interiør Takmaling", variantLabel: "Spannstørrelse", variant: "2,7 l", qty: 1, colorLabel: "Kremhvit (S 0505-Y20R)", price: 990 }],
-        comment: "Har dere denne på lager til i morgen?",
-        createdAt: "2026-08-06T08:02:00"
-    }
-];
+    var adminClient = null;
+    var adminContext = null;
+    var catalog = { categories: [], products: [], variants: [], colors: [] };
+    var editingProduct = null;
+    var editingColor = null;
+    var previewObjectUrl = null;
 
-var STATUS_ORDER = ["ny", "under_blanding", "klar", "utlevert"];
-var STATUS_META = {
-    ny: { label: "Ny ordre", classes: "bg-vibrant-orange/15 text-vibrant-orange" },
-    under_blanding: { label: "Under blanding", classes: "bg-amber-100 text-amber-800" },
-    klar: { label: "Klar til henting", classes: "bg-secondary-container/70 text-secondary" },
-    utlevert: { label: "Utlevert", classes: "bg-surface-container-high text-on-surface-variant" }
-};
-
-var ICON_CHOICES = ["format_paint", "roofing", "door_front", "home_work", "deck", "domain", "construction", "brush", "cleaning_services", "texture", "layers", "foundation"];
-
-function orderTotal(order) {
-    return order.items.reduce(function (sum, i) { return sum + i.price * i.qty; }, 0);
-}
-
-function formatOrderDate(iso) {
-    return new Date(iso).toLocaleDateString("nb-NO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-}
-
-function showToast(msg) {
-    var toast = document.getElementById("toast");
-    toast.textContent = msg;
-    toast.classList.remove("hidden");
-    clearTimeout(showToast._t);
-    showToast._t = setTimeout(function () { toast.classList.add("hidden"); }, 3200);
-}
-
-/* ---------------- Tabs ---------------- */
-document.querySelectorAll("#tab-switch .tab-btn").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-        document.querySelectorAll("#tab-switch .tab-btn").forEach(function (b) { b.classList.remove("active"); });
-        btn.classList.add("active");
-        var tab = btn.getAttribute("data-tab");
-        document.getElementById("tab-ordre").classList.toggle("hidden", tab !== "ordre");
-        document.getElementById("tab-produkter").classList.toggle("hidden", tab !== "produkter");
-    });
-});
-
-/* ---------------- Ordre ---------------- */
-var activeStatusFilter = "alle";
-
-function renderStatusFilters() {
-    var wrap = document.getElementById("status-filters");
-    var options = [{ key: "alle", label: "Alle (" + DEMO_ORDERS.length + ")" }].concat(
-        STATUS_ORDER.map(function (key) {
-            var count = DEMO_ORDERS.filter(function (o) { return o.status === key; }).length;
-            return { key: key, label: STATUS_META[key].label + " (" + count + ")" };
-        })
-    );
-    wrap.innerHTML = options.map(function (o) {
-        var isActive = o.key === activeStatusFilter;
-        var cls = isActive ? "bg-deep-forest text-white border-deep-forest" : "bg-white text-deep-forest border-outline-variant/40 hover:border-deep-forest/50";
-        return '<button type="button" data-status-filter="' + o.key + '" class="px-4 py-2 rounded-full border text-sm font-semibold transition-colors ' + cls + '">' + o.label + '</button>';
-    }).join("");
-    wrap.querySelectorAll("button").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            activeStatusFilter = btn.getAttribute("data-status-filter");
-            renderStatusFilters();
-            renderOrderList();
+    var html = window.escapeHTML || function (value) {
+        return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[character];
         });
-    });
-}
-
-function renderOrderList() {
-    var listWrap = document.getElementById("order-list");
-    var list = DEMO_ORDERS.filter(function (o) { return activeStatusFilter === "alle" || o.status === activeStatusFilter; })
-        .sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
-
-    if (!list.length) {
-        listWrap.innerHTML = '<p class="text-center text-on-surface-variant py-12">Ingen ordre med denne statusen.</p>';
-        return;
-    }
-
-    listWrap.innerHTML = list.map(function (order) {
-        var itemSummary = order.items.length === 1
-            ? order.items[0].qty + "× " + order.items[0].productName
-            : order.items.length + " varer";
-        var meta = STATUS_META[order.status];
-        return '' +
-            '<button type="button" data-order-id="' + order.id + '" class="w-full text-left bg-white rounded-xl border border-outline-variant/30 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 hover:border-primary/50 hover:shadow-sm transition-all">' +
-            '  <div class="min-w-0">' +
-            '    <div class="flex items-center gap-2 mb-1 flex-wrap">' +
-            '      <span class="font-bold text-deep-forest">' + order.id + '</span>' +
-            '      <span class="text-xs px-2 py-0.5 rounded-full font-semibold ' + meta.classes + '">' + meta.label + '</span>' +
-            '    </div>' +
-            '    <p class="text-sm text-on-surface-variant truncate">' + order.customer.name + ' &middot; ' + itemSummary + '</p>' +
-            '    <p class="text-xs text-on-surface-variant">' + formatOrderDate(order.createdAt) + '</p>' +
-            '  </div>' +
-            '  <div class="flex items-center gap-4">' +
-            '    <span class="font-bold text-primary">' + formatNOK(orderTotal(order)) + '</span>' +
-            '    <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>' +
-            '  </div>' +
-            '</button>';
-    }).join("");
-
-    listWrap.querySelectorAll("[data-order-id]").forEach(function (btn) {
-        btn.addEventListener("click", function () { openOrderModal(btn.getAttribute("data-order-id")); });
-    });
-}
-
-function openOrderModal(orderId) {
-    var order = DEMO_ORDERS.find(function (o) { return o.id === orderId; });
-    if (!order) return;
-    var modal = document.getElementById("order-modal");
-    var content = document.getElementById("order-modal-content");
-
-    var itemsHTML = order.items.map(function (i) {
-        return '' +
-            '<div class="flex justify-between gap-3 py-2 border-b border-outline-variant/15 last:border-0">' +
-            '  <div>' +
-            '    <p class="font-semibold text-deep-forest">' + i.qty + '&times; ' + i.productName + '</p>' +
-            '    <p class="text-sm text-on-surface-variant">' + i.variantLabel + ': ' + i.variant + (i.colorLabel ? " · " + i.colorLabel : "") + '</p>' +
-            '  </div>' +
-            '  <span class="font-semibold text-deep-forest shrink-0">' + formatNOK(i.price * i.qty) + '</span>' +
-            '</div>';
-    }).join("");
-
-    var stepsHTML = STATUS_ORDER.map(function (key) {
-        var isCurrent = key === order.status;
-        var cls = isCurrent ? "bg-vibrant-orange text-white border-vibrant-orange" : "bg-white text-deep-forest border-outline-variant/40 hover:border-vibrant-orange/60";
-        return '<button type="button" data-set-status="' + key + '" class="px-3 py-2 rounded-lg border text-sm font-semibold transition-colors ' + cls + '">' + STATUS_META[key].label + '</button>';
-    }).join("");
-
-    content.innerHTML = '' +
-        '<div class="flex items-start justify-between mb-5">' +
-        '  <div>' +
-        '    <h2 class="font-headline-md text-lg text-deep-forest">Ordre ' + order.id + '</h2>' +
-        '    <p class="text-sm text-on-surface-variant">' + formatOrderDate(order.createdAt) + '</p>' +
-        '  </div>' +
-        '  <button type="button" id="order-modal-close" class="text-on-surface-variant hover:text-deep-forest" aria-label="Lukk"><span class="material-symbols-outlined">close</span></button>' +
-        '</div>' +
-
-        '<div class="bg-surface-container rounded-lg p-4 mb-5">' +
-        '  <p class="font-semibold text-deep-forest mb-1">' + order.customer.name + '</p>' +
-        '  <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm">' +
-        '    <a class="text-primary hover:text-vibrant-orange flex items-center gap-1" href="mailto:' + order.customer.email + '"><span class="material-symbols-outlined text-[16px]">mail</span>' + order.customer.email + '</a>' +
-        '    <a class="text-primary hover:text-vibrant-orange flex items-center gap-1" href="tel:' + order.customer.phone.replace(/\s/g, "") + '"><span class="material-symbols-outlined text-[16px]">call</span>' + order.customer.phone + '</a>' +
-        '  </div>' +
-        (order.comment ? '  <p class="text-sm text-on-surface-variant italic mt-2">Kommentar: "' + order.comment + '"</p>' : '') +
-        '</div>' +
-
-        '<h3 class="font-semibold text-deep-forest mb-2">Produkter</h3>' +
-        '<div class="mb-4">' + itemsHTML + '</div>' +
-        '<div class="flex items-center justify-between pt-2 pb-5 border-b border-outline-variant/15 mb-5">' +
-        '  <span class="font-semibold text-deep-forest">Totalsum</span>' +
-        '  <span class="font-bold text-primary text-xl">' + formatNOK(orderTotal(order)) + '</span>' +
-        '</div>' +
-
-        '<h3 class="font-semibold text-deep-forest mb-2">Status</h3>' +
-        '<div class="flex flex-wrap gap-2 mb-6" id="status-steps">' + stepsHTML + '</div>' +
-
-        '<button type="button" id="order-modal-close-2" class="w-full border border-outline-variant/40 text-deep-forest font-semibold py-2.5 rounded-lg hover:bg-surface-container">Lukk</button>';
-
-    modal.classList.remove("hidden");
-    document.getElementById("order-modal-close").addEventListener("click", closeOrderModal);
-    document.getElementById("order-modal-close-2").addEventListener("click", closeOrderModal);
-    content.querySelectorAll("[data-set-status]").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            order.status = btn.getAttribute("data-set-status");
-            renderStatusFilters();
-            renderOrderList();
-            openOrderModal(order.id);
-            showToast("Status for " + order.id + " endret til «" + STATUS_META[order.status].label + "» (demo).");
-        });
-    });
-}
-
-function closeOrderModal() {
-    document.getElementById("order-modal").classList.add("hidden");
-}
-document.getElementById("order-modal").addEventListener("click", function (e) {
-    if (e.target.id === "order-modal") closeOrderModal();
-});
-
-/* ---------------- Produkter ---------------- */
-var CATEGORY_LABELS = { inne: "Maling inne", ute: "Maling ute", tilbehor: "Tilbehør" };
-var editingProductId = null;
-
-function renderProductTable() {
-    var body = document.getElementById("product-table-body");
-    body.innerHTML = PRODUCTS.map(function (p) {
-        var variantsLabel = p.variants.map(function (v) { return v.label; }).join(", ");
-        return '' +
-            '<tr class="border-t border-outline-variant/15">' +
-            '  <td class="px-4 py-3">' +
-            '    <div class="flex items-center gap-3">' +
-            '      <span class="w-9 h-9 rounded-lg bg-gradient-to-br ' + TINT_GRADIENTS[p.tint] + ' flex items-center justify-center shrink-0">' +
-            '        <span class="material-symbols-outlined text-[18px] ' + (p.tint === "tilbehor" ? "text-deep-forest" : "text-white") + '">' + p.icon + '</span>' +
-            '      </span>' +
-            '      <div class="min-w-0"><p class="font-semibold text-deep-forest truncate">' + p.name + '</p><p class="text-xs text-on-surface-variant truncate">' + p.subcategory + '</p></div>' +
-            '    </div>' +
-            '  </td>' +
-            '  <td class="px-4 py-3 text-on-surface-variant">' + CATEGORY_LABELS[p.category] + '</td>' +
-            '  <td class="px-4 py-3 text-on-surface-variant">' + variantsLabel + '</td>' +
-            '  <td class="px-4 py-3">' + (p.hasColor ? '<span class="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">Krever farge</span>' : '<span class="text-xs px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-semibold">Ingen farge</span>') + '</td>' +
-            '  <td class="px-4 py-3">' +
-            '    <label class="inline-flex items-center gap-2 cursor-pointer">' +
-            '      <input type="checkbox" data-toggle-active="' + p.id + '" class="rounded border-outline-variant text-vibrant-orange focus:ring-vibrant-orange" ' + (p.active !== false ? "checked" : "") + '/>' +
-            '      <span class="text-xs font-semibold ' + (p.active !== false ? "text-secondary" : "text-on-surface-variant") + '">' + (p.active !== false ? "Aktiv" : "Inaktiv") + '</span>' +
-            '    </label>' +
-            '  </td>' +
-            '  <td class="px-4 py-3 text-right"><button type="button" data-edit-product="' + p.id + '" class="text-primary font-semibold text-sm hover:text-vibrant-orange">Rediger</button></td>' +
-            '</tr>';
-    }).join("");
-
-    body.querySelectorAll("[data-toggle-active]").forEach(function (input) {
-        input.addEventListener("change", function () {
-            var p = getProductById(input.getAttribute("data-toggle-active"));
-            p.active = input.checked;
-            renderProductTable();
-            showToast((p.active ? "«" + p.name + "» aktivert" : "«" + p.name + "» deaktivert") + " (demo).");
-        });
-    });
-    body.querySelectorAll("[data-edit-product]").forEach(function (btn) {
-        btn.addEventListener("click", function () { openProductModal(getProductById(btn.getAttribute("data-edit-product"))); });
-    });
-}
-
-function renderIconPicker(selected) {
-    var wrap = document.getElementById("pf-icon-picker");
-    wrap.innerHTML = ICON_CHOICES.map(function (icon) {
-        var isSel = icon === selected;
-        return '<button type="button" data-icon="' + icon + '" class="aspect-square rounded-lg border-2 flex items-center justify-center transition-colors ' + (isSel ? "border-vibrant-orange bg-vibrant-orange/10" : "border-outline-variant/40 hover:border-primary/50") + '"><span class="material-symbols-outlined text-[20px] text-deep-forest">' + icon + '</span></button>';
-    }).join("");
-    wrap.querySelectorAll("button").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            wrap.dataset.selected = btn.getAttribute("data-icon");
-            renderIconPicker(btn.getAttribute("data-icon"));
-        });
-    });
-    wrap.dataset.selected = selected;
-}
-
-function renderVariantRows(variants) {
-    var wrap = document.getElementById("pf-variants");
-    wrap.innerHTML = "";
-    (variants.length ? variants : [{ label: "", price: "" }]).forEach(function (v) { addVariantRow(v.label, v.price); });
-}
-
-function addVariantRow(label, price) {
-    var wrap = document.getElementById("pf-variants");
-    var row = document.createElement("div");
-    row.className = "flex gap-2 items-center";
-    row.innerHTML = '' +
-        '<input type="text" placeholder="Variant, f.eks. 2,7 l, 50 mm eller 30 mm × 33 m" value="' + (label || "") + '" class="flex-1 rounded-lg border border-outline-variant/50 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" data-variant-label/>' +
-        '<input type="number" min="0" placeholder="Pris (kr)" value="' + (price === "" || price === undefined ? "" : price) + '" class="w-28 rounded-lg border border-outline-variant/50 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" data-variant-price/>' +
-        '<button type="button" class="text-on-surface-variant hover:text-error" aria-label="Fjern variant" data-remove-variant><span class="material-symbols-outlined text-[18px]">close</span></button>';
-    row.querySelector("[data-remove-variant]").addEventListener("click", function () {
-        if (wrap.children.length > 1) row.remove();
-    });
-    wrap.appendChild(row);
-}
-
-document.getElementById("pf-add-variant").addEventListener("click", function () { addVariantRow("", ""); });
-
-function openProductModal(product) {
-    editingProductId = product ? product.id : null;
-    document.getElementById("product-modal-title").textContent = product ? "Rediger produkt" : "Nytt produkt";
-    document.getElementById("pf-name").value = product ? product.name : "";
-    document.getElementById("pf-desc").value = product ? product.shortDesc : "";
-    document.getElementById("pf-category").value = product ? product.category : "inne";
-    document.getElementById("pf-subcategory").value = product ? product.subcategory : "";
-    document.getElementById("pf-usearea").value = product ? product.useArea : "";
-    document.getElementById("pf-has-color").checked = product ? product.hasColor : true;
-    document.getElementById("pf-active").checked = product ? product.active !== false : true;
-    document.getElementById("pf-error").classList.add("hidden");
-    renderIconPicker(product ? product.icon : ICON_CHOICES[0]);
-    renderVariantRows(product ? product.variants : []);
-    document.getElementById("product-modal").classList.remove("hidden");
-}
-
-function closeProductModal() {
-    document.getElementById("product-modal").classList.add("hidden");
-}
-
-document.getElementById("new-product-btn").addEventListener("click", function () { openProductModal(null); });
-document.getElementById("product-modal-close").addEventListener("click", closeProductModal);
-document.getElementById("pf-cancel").addEventListener("click", closeProductModal);
-document.getElementById("product-modal").addEventListener("click", function (e) {
-    if (e.target.id === "product-modal") closeProductModal();
-});
-
-document.getElementById("product-form").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var errorEl = document.getElementById("pf-error");
-    var name = document.getElementById("pf-name").value.trim();
-    var variants = Array.from(document.querySelectorAll("#pf-variants > div")).map(function (row) {
-        return {
-            label: row.querySelector("[data-variant-label]").value.trim(),
-            price: Number(row.querySelector("[data-variant-price]").value) || 0
-        };
-    }).filter(function (v) { return v.label && v.price > 0; });
-
-    if (!name || !variants.length) {
-        errorEl.textContent = "Fyll ut produktnavn og minst én variant med pris.";
-        errorEl.classList.remove("hidden");
-        return;
-    }
-    errorEl.classList.add("hidden");
-
-    var category = document.getElementById("pf-category").value;
-    var data = {
-        name: name,
-        shortDesc: document.getElementById("pf-desc").value.trim(),
-        category: category,
-        subcategory: document.getElementById("pf-subcategory").value.trim() || CATEGORY_LABELS[category],
-        useArea: document.getElementById("pf-usearea").value.trim() || CATEGORY_LABELS[category],
-        icon: document.getElementById("pf-icon-picker").dataset.selected || ICON_CHOICES[0],
-        tint: category,
-        hasColor: document.getElementById("pf-has-color").checked,
-        active: document.getElementById("pf-active").checked,
-        variants: variants
     };
-    if (!editingProductId) {
-        // Nye produkter opprettet i demoen får en generisk variantetikett
-        // ("Størrelse") siden skjemaet ikke ber om variant-type.
-        data.variantType = "storrelse";
+
+    function byId(id) { return document.getElementById(id); }
+
+    function showOnly(viewId) {
+        ["admin-loading", "admin-login", "admin-app"].forEach(function (id) {
+            byId(id).classList.toggle("hidden", id !== viewId);
+        });
     }
 
-    if (editingProductId) {
-        Object.assign(getProductById(editingProductId), data);
-        showToast("«" + data.name + "» oppdatert (demo).");
-    } else {
-        data.id = "demo-" + Date.now();
-        PRODUCTS.push(data);
-        showToast("«" + data.name + "» opprettet (demo - lagres ikke permanent).");
+    function showToast(message) {
+        var toast = byId("toast");
+        toast.textContent = message;
+        toast.classList.remove("hidden");
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(function () { toast.classList.add("hidden"); }, 4200);
     }
-    closeProductModal();
-    renderProductTable();
-});
 
-/* ---------------- Init ---------------- */
-renderStatusFilters();
-renderOrderList();
-renderProductTable();
+    function showGlobalError(error) {
+        var wrap = byId("admin-global-error");
+        wrap.textContent = error && error.message ? error.message : String(error);
+        wrap.classList.remove("hidden");
+    }
+
+    function clearGlobalError() { byId("admin-global-error").classList.add("hidden"); }
+
+    function friendlyAuthError(error) {
+        if (error && (error.status === 400 || error.status === 401)) return "Feil e-post eller passord.";
+        return error && error.message ? error.message : "Innloggingen feilet.";
+    }
+
+    function setButtonBusy(button, busy, busyLabel) {
+        if (!button.dataset.idleLabel) button.dataset.idleLabel = button.textContent;
+        button.disabled = busy;
+        button.classList.toggle("opacity-60", busy);
+        button.textContent = busy ? busyLabel : button.dataset.idleLabel;
+    }
+
+    function formatNOKOre(amountOre) {
+        var amount = Number(amountOre || 0) / 100;
+        return amount.toLocaleString("nb-NO", {
+            minimumFractionDigits: amountOre % 100 ? 2 : 0,
+            maximumFractionDigits: 2
+        }) + " kr";
+    }
+
+    function formatVatRate(rateBasisPoints) {
+        return (Number(rateBasisPoints || 0) / 100).toLocaleString("nb-NO", {
+            minimumFractionDigits: rateBasisPoints % 100 ? 2 : 0,
+            maximumFractionDigits: 2
+        }) + " %";
+    }
+
+    function priceExVatOre(priceOre, rateBasisPoints) {
+        return Math.round(priceOre * 10000 / (10000 + rateBasisPoints));
+    }
+
+    function normalizeStockStatus(value) {
+        return value === "remote_stock" || value === "fjernlager" ? "remote_stock" : "in_stock";
+    }
+
+    function slugify(value) {
+        return String(value || "")
+            .toLowerCase()
+            .normalize("NFKD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "") || "element";
+    }
+
+    function categoryById(id) {
+        return catalog.categories.find(function (category) { return category.id === id; });
+    }
+
+    function categoryLabel(id) {
+        var category = categoryById(id);
+        if (!category) return "Ukjent kategori";
+        var parent = category.parent_id ? categoryById(category.parent_id) : null;
+        return parent ? parent.name + " / " + category.name : category.name;
+    }
+
+    function categoryTint(id) {
+        var category = categoryById(id);
+        var parent = category && category.parent_id ? categoryById(category.parent_id) : category;
+        return parent ? parent.slug : "tilbehor";
+    }
+
+    function productsWithVariants() {
+        return catalog.products.map(function (product) {
+            return Object.assign({}, product, {
+                variants: catalog.variants.filter(function (variant) { return variant.product_id === product.id; })
+            });
+        });
+    }
+
+    async function loadCatalogAndRender() {
+        clearGlobalError();
+        catalog = await adminClient.loadCatalog();
+        renderProductTable();
+        renderColorList();
+    }
+
+    async function enterAdmin() {
+        adminContext = await adminClient.loadStoreContext();
+        byId("admin-store-name").textContent = adminContext.storeName + " · " + adminContext.role;
+        byId("admin-user-label").textContent = adminContext.user.email || "Innlogget bruker";
+        await loadCatalogAndRender();
+        showOnly("admin-app");
+    }
+
+    async function initialize() {
+        showOnly("admin-loading");
+        try {
+            var config = await window.SupabaseAdmin.publicConfig();
+            adminClient = window.SupabaseAdmin.create(config);
+            var session = await adminClient.restoreSession();
+            if (!session) {
+                showOnly("admin-login");
+                return;
+            }
+            await enterAdmin();
+        } catch (error) {
+            showOnly("admin-login");
+            var errorEl = byId("login-error");
+            errorEl.textContent = error.message;
+            errorEl.classList.remove("hidden");
+        }
+    }
+
+    byId("login-form").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        var errorEl = byId("login-error");
+        var submit = byId("login-submit");
+        errorEl.classList.add("hidden");
+        setButtonBusy(submit, true, "Logger inn …");
+        try {
+            await adminClient.signIn(byId("login-email").value.trim(), byId("login-password").value);
+            await enterAdmin();
+            byId("login-password").value = "";
+        } catch (error) {
+            if (adminClient) await adminClient.signOut();
+            errorEl.textContent = friendlyAuthError(error);
+            errorEl.classList.remove("hidden");
+        } finally {
+            setButtonBusy(submit, false, "Logger inn …");
+        }
+    });
+
+    byId("logout-btn").addEventListener("click", async function () {
+        await adminClient.signOut();
+        adminContext = null;
+        catalog = { categories: [], products: [], variants: [], colors: [] };
+        showOnly("admin-login");
+        showToast("Du er logget ut.");
+    });
+
+    function renderProductTable() {
+        var products = productsWithVariants();
+        var body = byId("product-table-body");
+        byId("product-count").textContent = products.length + " produkter";
+
+        if (!products.length) {
+            body.innerHTML = '<tr><td colspan="6" class="px-4 py-10 text-center text-on-surface-variant">Ingen produkter ennå.</td></tr>';
+            return;
+        }
+
+        body.innerHTML = products.map(function (product) {
+            var activeVariants = product.variants.filter(function (variant) { return variant.is_active; });
+            var variantsLabel = activeVariants.map(function (variant) {
+                var price = variant.campaign_price_ore == null ? variant.price_ore : variant.campaign_price_ore;
+                return html(variant.label) + " · " + html(formatNOKOre(price));
+            }).join("<br>");
+            var image = product.image_path
+                ? '<img src="' + html(adminClient.publicStorageUrl(product.image_path)) + '" alt="" class="w-11 h-11 rounded-lg object-cover border border-outline-variant/20">'
+                : '<span class="w-11 h-11 rounded-lg bg-surface-container flex items-center justify-center"><span class="material-symbols-outlined text-primary">inventory_2</span></span>';
+            return '' +
+                '<tr class="border-t border-outline-variant/15">' +
+                '  <td class="px-4 py-3"><div class="flex items-center gap-3">' + image + '<div class="min-w-0"><p class="font-semibold text-deep-forest truncate">' + html(product.name) + '</p><p class="text-xs text-on-surface-variant truncate">' + html(product.slug) + '</p></div></div></td>' +
+                '  <td class="px-4 py-3 text-on-surface-variant">' + html(categoryLabel(product.category_id)) + '</td>' +
+                '  <td class="px-4 py-3 text-on-surface-variant leading-5">' + (variantsLabel || "Ingen aktive varianter") + '</td>' +
+                '  <td class="px-4 py-3 text-on-surface-variant">' + html(formatVatRate(product.vat_rate_basis_points)) + '</td>' +
+                '  <td class="px-4 py-3"><label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" data-toggle-product="' + html(product.id) + '" class="rounded border-outline-variant text-vibrant-orange focus:ring-vibrant-orange" ' + (product.is_active ? "checked" : "") + '><span class="text-xs font-semibold ' + (product.is_active ? "text-secondary" : "text-on-surface-variant") + '">' + (product.is_active ? "Aktiv" : "Inaktiv") + '</span></label></td>' +
+                '  <td class="px-4 py-3 text-right"><button type="button" data-edit-product="' + html(product.id) + '" class="text-primary font-semibold text-sm hover:text-vibrant-orange">Rediger</button></td>' +
+                '</tr>';
+        }).join("");
+
+        body.querySelectorAll("[data-edit-product]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                openProductModal(products.find(function (product) { return product.id === button.dataset.editProduct; }));
+            });
+        });
+        body.querySelectorAll("[data-toggle-product]").forEach(function (input) {
+            input.addEventListener("change", async function () {
+                input.disabled = true;
+                try {
+                    await adminClient.updateProductActive(input.dataset.toggleProduct, input.checked);
+                    await loadCatalogAndRender();
+                    showToast(input.checked ? "Produktet er aktivert." : "Produktet er deaktivert.");
+                } catch (error) {
+                    showGlobalError(error);
+                    input.checked = !input.checked;
+                    input.disabled = false;
+                }
+            });
+        });
+    }
+
+    function populateCategorySelect(selectedId) {
+        var select = byId("pf-category");
+        select.innerHTML = "";
+        var parents = catalog.categories.filter(function (category) { return !category.parent_id; });
+        parents.forEach(function (parent) {
+            var children = catalog.categories.filter(function (category) { return category.parent_id === parent.id; });
+            var group = document.createElement("optgroup");
+            group.label = parent.name;
+            (children.length ? children : [parent]).forEach(function (category) {
+                if (!category.is_active && category.id !== selectedId) return;
+                var option = document.createElement("option");
+                option.value = category.id;
+                option.textContent = category.name + (category.is_active ? "" : " (inaktiv)");
+                option.selected = category.id === selectedId;
+                group.appendChild(option);
+            });
+            if (group.children.length) select.appendChild(group);
+        });
+    }
+
+    function setImagePreview(url) {
+        var preview = byId("pf-image-preview");
+        preview.replaceChildren();
+        if (!url) {
+            var icon = document.createElement("span");
+            icon.className = "material-symbols-outlined text-4xl";
+            icon.textContent = "image";
+            preview.appendChild(icon);
+            return;
+        }
+        var image = document.createElement("img");
+        image.src = url;
+        image.alt = "Forhåndsvisning";
+        image.className = "w-full h-full object-cover";
+        preview.appendChild(image);
+    }
+
+    function revokePreviewUrl() {
+        if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+    }
+
+    function variantRow(variant) {
+        var row = document.createElement("div");
+        row.className = "border border-outline-variant/30 rounded-xl p-4 bg-surface-container/40";
+        row.dataset.variantId = variant && variant.id ? variant.id : crypto.randomUUID();
+        row.innerHTML = '' +
+            '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">' +
+            '  <div><label class="block text-xs font-semibold mb-1">Variant</label><input required maxlength="160" data-v-label class="field text-sm" placeholder="F.eks. 2,7 l"></div>' +
+            '  <div><label class="block text-xs font-semibold mb-1">SKU (valgfritt)</label><input maxlength="120" data-v-sku class="field text-sm"></div>' +
+            '  <div><label class="block text-xs font-semibold mb-1">Ordinær pris inkl. MVA</label><input required min="0.01" step="0.01" type="number" data-v-price class="field text-sm"><span data-v-ex-vat class="block text-[10px] text-on-surface-variant mt-1"></span></div>' +
+            '  <div><label class="block text-xs font-semibold mb-1">Kampanjepris inkl. MVA</label><input min="0.01" step="0.01" type="number" data-v-campaign class="field text-sm" placeholder="Valgfritt"></div>' +
+            '  <div><label class="block text-xs font-semibold mb-1">Lagerstatus</label><select data-v-stock class="field text-sm"><option value="in_stock">På lager</option><option value="remote_stock">Fjernlager / bestillingsvare</option></select></div>' +
+            '  <div class="sm:col-span-2"><label class="block text-xs font-semibold mb-1">Forventet leveringstid</label><input required maxlength="200" data-v-lead class="field text-sm"></div>' +
+            '  <div><label class="block text-xs font-semibold mb-1">Intern leverandørreferanse</label><input maxlength="250" data-v-supplier class="field text-sm"></div>' +
+            '</div>' +
+            '<div class="flex items-center justify-between mt-3"><label class="flex items-center gap-2 text-xs"><input type="checkbox" data-v-active class="rounded text-vibrant-orange"><span>Aktiv variant</span></label><button type="button" data-v-remove class="text-error text-xs font-semibold">Fjern fra skjema</button></div>';
+
+        row.querySelector("[data-v-label]").value = variant ? variant.label || "" : "";
+        row.querySelector("[data-v-sku]").value = variant ? variant.sku || "" : "";
+        row.querySelector("[data-v-price]").value = variant ? (variant.price_ore / 100).toFixed(2) : "";
+        row.querySelector("[data-v-campaign]").value = variant && variant.campaign_price_ore != null ? (variant.campaign_price_ore / 100).toFixed(2) : "";
+        row.querySelector("[data-v-stock]").value = normalizeStockStatus(variant && variant.stock_status);
+        row.querySelector("[data-v-lead]").value = variant ? variant.expected_lead_time || "" : "Normalt klar for henting samme dag";
+        row.querySelector("[data-v-supplier]").value = variant ? variant.supplier_reference || "" : "";
+        row.querySelector("[data-v-active]").checked = variant ? variant.is_active !== false : true;
+        row.querySelector("[data-v-remove]").addEventListener("click", function () {
+            if (byId("pf-variants").children.length === 1) {
+                showToast("Et produkt må ha minst én variant.");
+                return;
+            }
+            row.remove();
+        });
+        row.querySelector("[data-v-stock]").addEventListener("change", function (event) {
+            var lead = row.querySelector("[data-v-lead]");
+            if (!lead.value || lead.value === "Normalt klar for henting samme dag" || lead.value === "3–7 dager") {
+                lead.value = event.target.value === "remote_stock" ? "3–7 dager" : "Normalt klar for henting samme dag";
+            }
+        });
+        row.querySelector("[data-v-price]").addEventListener("input", updateVariantExVat);
+        byId("pf-variants").appendChild(row);
+        updateVariantExVat();
+    }
+
+    function updateVariantExVat() {
+        var vatRate = Math.round((Number(byId("pf-vat-rate").value) || 0) * 100);
+        byId("pf-variants").querySelectorAll(":scope > div").forEach(function (row) {
+            var priceOre = Math.round((Number(row.querySelector("[data-v-price]").value) || 0) * 100);
+            row.querySelector("[data-v-ex-vat]").textContent = priceOre > 0 ? "Eks. MVA: " + formatNOKOre(priceExVatOre(priceOre, vatRate)) : "";
+        });
+    }
+
+    byId("pf-vat-rate").addEventListener("input", updateVariantExVat);
+    byId("pf-add-variant").addEventListener("click", function () { variantRow(null); });
+
+    function openProductModal(product) {
+        editingProduct = product || null;
+        revokePreviewUrl();
+        byId("product-modal-title").textContent = product ? "Rediger produkt" : "Nytt produkt";
+        byId("pf-name").value = product ? product.name : "";
+        byId("pf-short-desc").value = product ? product.short_description || "" : "";
+        byId("pf-description").value = product ? product.description || "" : "";
+        byId("pf-usearea").value = product ? product.use_area || "" : "";
+        byId("pf-vat-rate").value = product ? product.vat_rate_basis_points / 100 : 25;
+        byId("pf-has-color").checked = product ? product.has_color : false;
+        byId("pf-featured").checked = product ? product.is_featured : false;
+        byId("pf-active").checked = product ? product.is_active : true;
+        byId("pf-image").value = "";
+        byId("pf-image-info").textContent = "";
+        byId("pf-error").classList.add("hidden");
+        populateCategorySelect(product ? product.category_id : null);
+        if (!product && byId("pf-category").options.length) byId("pf-category").selectedIndex = 0;
+        setImagePreview(product && product.image_path ? adminClient.publicStorageUrl(product.image_path) : "");
+        byId("pf-variants").innerHTML = "";
+        (product && product.variants.length ? product.variants : [null]).forEach(variantRow);
+        byId("product-modal").classList.remove("hidden");
+    }
+
+    function closeProductModal() {
+        byId("product-modal").classList.add("hidden");
+        revokePreviewUrl();
+    }
+
+    byId("new-product-btn").addEventListener("click", function () { openProductModal(null); });
+    byId("product-modal-close").addEventListener("click", closeProductModal);
+    byId("pf-cancel").addEventListener("click", closeProductModal);
+    byId("product-modal").addEventListener("click", function (event) { if (event.target === byId("product-modal")) closeProductModal(); });
+    byId("pf-image").addEventListener("change", function (event) {
+        revokePreviewUrl();
+        var file = event.target.files[0];
+        if (!file) {
+            setImagePreview(editingProduct && editingProduct.image_path ? adminClient.publicStorageUrl(editingProduct.image_path) : "");
+            return;
+        }
+        previewObjectUrl = URL.createObjectURL(file);
+        setImagePreview(previewObjectUrl);
+        byId("pf-image-info").textContent = "Original: " + Math.round(file.size / 1024) + " KB";
+    });
+
+    function collectVariants() {
+        return Array.from(byId("pf-variants").children).map(function (row, index) {
+            var label = row.querySelector("[data-v-label]").value.trim();
+            var priceOre = Math.round(Number(row.querySelector("[data-v-price]").value) * 100);
+            var campaignValue = row.querySelector("[data-v-campaign]").value;
+            var campaignPriceOre = campaignValue === "" ? null : Math.round(Number(campaignValue) * 100);
+            if (!label || !Number.isInteger(priceOre) || priceOre <= 0) throw new Error("Alle varianter må ha navn og en gyldig pris.");
+            if (campaignPriceOre != null && (!Number.isInteger(campaignPriceOre) || campaignPriceOre < 0 || campaignPriceOre >= priceOre)) {
+                throw new Error("Kampanjepris må være lavere enn ordinær pris.");
+            }
+            var leadTime = row.querySelector("[data-v-lead]").value.trim();
+            if (!leadTime) throw new Error("Alle varianter må ha forventet leveringstid.");
+            return {
+                id: row.dataset.variantId,
+                label: label,
+                sku: row.querySelector("[data-v-sku]").value.trim(),
+                price_ore: priceOre,
+                campaign_price_ore: campaignPriceOre,
+                stock_status: normalizeStockStatus(row.querySelector("[data-v-stock]").value),
+                expected_lead_time: leadTime,
+                supplier_reference: row.querySelector("[data-v-supplier]").value.trim(),
+                is_active: row.querySelector("[data-v-active]").checked,
+                sort_order: (index + 1) * 10
+            };
+        });
+    }
+
+    byId("product-form").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        var errorEl = byId("pf-error");
+        var submit = byId("pf-submit");
+        var uploadedPath = null;
+        errorEl.classList.add("hidden");
+        setButtonBusy(submit, true, "Lagrer …");
+
+        try {
+            var name = byId("pf-name").value.trim();
+            var categoryId = byId("pf-category").value;
+            var vatRateBasisPoints = Math.round(Number(byId("pf-vat-rate").value) * 100);
+            if (!name || !categoryId) throw new Error("Navn og kategori er påkrevd.");
+            if (!Number.isInteger(vatRateBasisPoints) || vatRateBasisPoints < 0 || vatRateBasisPoints > 10000) throw new Error("MVA-satsen må være mellom 0 og 100 prosent.");
+
+            var productId = editingProduct ? editingProduct.id : crypto.randomUUID();
+            var oldImagePath = editingProduct ? editingProduct.image_path : null;
+            var imagePath = oldImagePath;
+            var imageFile = byId("pf-image").files[0];
+            if (imageFile) {
+                byId("pf-image-info").textContent = "Komprimerer bildet …";
+                var compressed = await window.ImageCompression.compressImage(imageFile);
+                byId("pf-image-info").textContent = "Komprimert til " + Math.round(compressed.blob.size / 1024) + " KB (" + compressed.width + " × " + compressed.height + ")";
+                uploadedPath = await adminClient.uploadProductImage(productId, name, compressed.blob);
+                imagePath = uploadedPath;
+            }
+
+            var productData = {
+                id: productId,
+                category_id: categoryId,
+                slug: editingProduct ? editingProduct.slug : slugify(name) + "-" + productId.slice(0, 8),
+                name: name,
+                short_description: byId("pf-short-desc").value.trim(),
+                description: byId("pf-description").value.trim(),
+                use_area: byId("pf-usearea").value.trim(),
+                image_path: imagePath || "",
+                icon: editingProduct ? editingProduct.icon || "inventory_2" : "inventory_2",
+                tint: categoryTint(categoryId),
+                variant_type: editingProduct ? editingProduct.variant_type || "storrelse" : "storrelse",
+                has_color: byId("pf-has-color").checked,
+                vat_rate_basis_points: vatRateBasisPoints,
+                is_featured: byId("pf-featured").checked,
+                is_active: byId("pf-active").checked,
+                sort_order: editingProduct ? editingProduct.sort_order : (catalog.products.length + 1) * 10
+            };
+
+            await adminClient.saveProduct(productData, collectVariants());
+
+            if (uploadedPath && oldImagePath && oldImagePath !== uploadedPath) {
+                adminClient.deleteStorageObject(oldImagePath).catch(function (error) {
+                    console.warn("Gammelt produktbilde kunne ikke slettes:", error.message);
+                });
+            }
+            await loadCatalogAndRender();
+            closeProductModal();
+            showToast(editingProduct ? "Produktet er oppdatert i Supabase." : "Produktet er opprettet i Supabase.");
+        } catch (error) {
+            if (uploadedPath) {
+                await adminClient.deleteStorageObject(uploadedPath).catch(function () {});
+            }
+            errorEl.textContent = error.message;
+            errorEl.classList.remove("hidden");
+        } finally {
+            setButtonBusy(submit, false, "Lagrer …");
+        }
+    });
+
+    function safeHex(value) { return /^#[0-9a-f]{6}$/i.test(value || "") ? value : "#ffffff"; }
+
+    function renderColorList() {
+        var wrap = byId("color-list");
+        if (!catalog.colors.length) {
+            wrap.innerHTML = '<p class="text-on-surface-variant">Ingen farger ennå.</p>';
+            return;
+        }
+        wrap.innerHTML = catalog.colors.map(function (color) {
+            return '' +
+                '<div class="bg-white border border-outline-variant/30 rounded-xl p-4 flex items-center gap-3">' +
+                '  <span class="w-12 h-12 rounded-lg border border-outline-variant/40 shrink-0" style="background-color:' + safeHex(color.hex) + '"></span>' +
+                '  <div class="min-w-0 flex-1"><p class="font-semibold text-deep-forest truncate">' + html(color.name) + '</p><p class="text-xs text-on-surface-variant">' + html(color.code) + (color.supplier ? " · " + html(color.supplier) : "") + '</p></div>' +
+                '  <label class="flex items-center gap-1 text-xs"><input data-toggle-color="' + html(color.id) + '" type="checkbox" class="rounded text-vibrant-orange" ' + (color.is_active ? "checked" : "") + '><span>Aktiv</span></label>' +
+                '  <button data-edit-color="' + html(color.id) + '" type="button" aria-label="Rediger ' + html(color.name) + '" class="text-primary"><span class="material-symbols-outlined text-[20px]">edit</span></button>' +
+                '</div>';
+        }).join("");
+        wrap.querySelectorAll("[data-edit-color]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                openColorModal(catalog.colors.find(function (color) { return color.id === button.dataset.editColor; }));
+            });
+        });
+        wrap.querySelectorAll("[data-toggle-color]").forEach(function (input) {
+            input.addEventListener("change", async function () {
+                input.disabled = true;
+                try {
+                    await adminClient.updateColorActive(input.dataset.toggleColor, input.checked);
+                    await loadCatalogAndRender();
+                    showToast("Fargestatus er oppdatert.");
+                } catch (error) {
+                    showGlobalError(error);
+                    input.checked = !input.checked;
+                    input.disabled = false;
+                }
+            });
+        });
+    }
+
+    function openColorModal(color) {
+        editingColor = color || null;
+        byId("color-modal-title").textContent = color ? "Rediger farge" : "Ny farge";
+        byId("cf-name").value = color ? color.name : "";
+        byId("cf-code").value = color ? color.code : "";
+        byId("cf-hex").value = color ? safeHex(color.hex) : "#ffffff";
+        byId("cf-supplier").value = color ? color.supplier || "" : "";
+        byId("cf-featured").checked = color ? color.is_featured : true;
+        byId("cf-active").checked = color ? color.is_active : true;
+        byId("cf-error").classList.add("hidden");
+        byId("color-modal").classList.remove("hidden");
+    }
+
+    function closeColorModal() { byId("color-modal").classList.add("hidden"); }
+    byId("new-color-btn").addEventListener("click", function () { openColorModal(null); });
+    byId("color-modal-close").addEventListener("click", closeColorModal);
+    byId("cf-cancel").addEventListener("click", closeColorModal);
+    byId("color-modal").addEventListener("click", function (event) { if (event.target === byId("color-modal")) closeColorModal(); });
+    byId("color-form").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        var errorEl = byId("cf-error");
+        var submit = byId("cf-submit");
+        errorEl.classList.add("hidden");
+        setButtonBusy(submit, true, "Lagrer …");
+        try {
+            var name = byId("cf-name").value.trim();
+            var code = byId("cf-code").value.trim();
+            if (!name || !code) throw new Error("Navn og fargekode er påkrevd.");
+            var id = editingColor ? editingColor.id : crypto.randomUUID();
+            await adminClient.saveColor({
+                id: id,
+                exists: !!editingColor,
+                slug: editingColor ? editingColor.slug : slugify(name) + "-" + id.slice(0, 8),
+                name: name,
+                code: code,
+                hex: byId("cf-hex").value,
+                supplier: byId("cf-supplier").value.trim(),
+                is_featured: byId("cf-featured").checked,
+                is_active: byId("cf-active").checked,
+                sort_order: editingColor ? editingColor.sort_order : (catalog.colors.length + 1) * 10
+            });
+            await loadCatalogAndRender();
+            closeColorModal();
+            showToast(editingColor ? "Fargen er oppdatert." : "Fargen er opprettet.");
+        } catch (error) {
+            errorEl.textContent = error.message;
+            errorEl.classList.remove("hidden");
+        } finally {
+            setButtonBusy(submit, false, "Lagrer …");
+        }
+    });
+
+    initialize();
+})();

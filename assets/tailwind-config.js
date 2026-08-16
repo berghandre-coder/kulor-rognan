@@ -1,5 +1,5 @@
-// Delt Tailwind-konfigurasjon for Kulør Rognan - gjenbrukt fra index.html
-// slik at fargepalett, typografi og spacing er identisk på tvers av alle sider.
+// Delt Tailwind-konfigurasjon for storefront-temaet.
+// Fargepalett, typografi og spacing er identisk på tvers av alle sider.
 tailwind.config = {
     darkMode: "class",
     theme: {

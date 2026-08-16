@@ -1,6 +1,6 @@
 # MVP-plan for pilotkunde – Kulør Rognan
 
-_Foreløpig plan · Sist oppdatert: 2026-08-12 · Erstatter tidligere versjon (se Git-historikk for opprinnelig utgave)_
+_Foreløpig plan · Sist oppdatert: 2026-08-16 · Erstatter tidligere versjon (se Git-historikk for opprinnelig utgave)_
 
 Kulør Rognan går videre fra klikkbar demo (se [nettbutikk-demo-status.md](nettbutikk-demo-status.md)) til en reell pilot de kan teste i butikken. Kunden betaler for **etablering/implementering** pluss et løpende **abonnement**, mens **AEMA beholder fullt eierskap** til kildekode og plattformarkitektur, med rett til å videreutvikle og videreselge løsningen til andre kunder. Dette dokumentet er styrende for de kommersielle og arkitektoniske beslutningene som er tatt for piloten. Teknisk detaljplan for selve nettbutikk-funksjonaliteten (databasestruktur for produkter/kategorier, klikk-og-hent-flyt osv.) ligger fortsatt i [nettbutikk-utviklingsplan.md](nettbutikk-utviklingsplan.md), men **betalingsdelen i det dokumentet er utdatert** (beskriver Vipps) – dette dokumentet er nå fasit for betaling og infrastruktur.
 
@@ -33,14 +33,46 @@ Vipps er tatt ut av MVP-en. Kunden ønsker Stripe fra start:
 - **Kunden oppretter og eier sin egen Stripe-konto/betalingsavtale.** Løsningen integreres mot denne kontoen – AEMA formidler ikke betalinger på egne vegne, og har dermed ikke selvstendig PCI-/betalingsansvar.
 - **Transaksjonskostnader fra Stripe bæres av kunden**, ikke av AEMA, og inngår ikke i de 600 kr/mnd.
 - Ordre opprettes med status «venter» før betaling, og bekreftes serverside via **Stripe webhook** (ikke bare klientside-redirect), samme prinsipp som tidligere beskrevet for Vipps.
+- Stripe Checkout opprettes med **ordrens beregnede `total_inc_vat_ore`**. Stripe-resultatet er ikke kilden til MVA-beregningen; prisgrunnlag, MVA-satser og MVA-beløp beregnes og lagres i AEMAs ordrelogikk før betalingssesjonen opprettes.
+- Webhooken skal kontrollere at betalt beløp og valuta samsvarer med ordrens lagrede `total_inc_vat_ore` og `currency` før betalingsstatus settes til «betalt».
 - Webhook-håndtering krever en liten serverdel – naturlig som en Netlify Function, slik at man ikke trenger å innføre en separat backend-plattform bare for dette (se pkt. 5).
+
+## 3A. MVA – obligatorisk fra første ordre
+
+MVA er en del av MVP-ens produkt-, pris- og ordremodell fra start og skal være ferdig definert før Stripe- og ordreimplementasjonen låses. Alle pengebeløp som lagres eller sendes til betaling håndteres som **heltall i øre**. MVA-satsen lagres som heltall i **basispunkter** (`vat_rate_basis_points`), der `2500` betyr 25,00 %. Modellen er dermed ikke låst til én sats.
+
+**Produktmodellen:**
+- Hvert produkt har en eksplisitt `vat_rate_basis_points`, med `2500` som forhåndsvalgt standard for vanlige varer i piloten.
+- Variantens `price_ore` og eventuell `campaign_price_ore` er pris **inkl. MVA**, fordi dette er prisen som vises til og betales av sluttkunden.
+- Pris eks. MVA beregnes fra pris inkl. MVA og produktets sats. Den skal ikke vedlikeholdes manuelt som en uavhengig pris som kan komme ut av synk.
+
+**Ordre- og ordrelinjemodellen:**
+- Ved ordreopprettelse beregnes MVA på hver ordrelinjes samlede inklusivbeløp: `line_amount_ex_vat_ore = round(line_amount_inc_vat_ore × 10000 / (10000 + vat_rate_basis_points))`, og `line_vat_ore` er differansen. Dette gir én konsekvent avrunding per ordrelinje.
+- Hver ordrelinje lagrer snapshot av produktnavn, antall, `unit_price_inc_vat_ore`, `unit_price_ex_vat_ore`, `vat_rate_basis_points`, `line_amount_ex_vat_ore`, `line_vat_ore` og `line_amount_inc_vat_ore`. Produktpris eller MVA-sats kan dermed endres senere uten at ordrehistorikken endres.
+- Ordren lagrer `subtotal_ex_vat_ore`, `vat_total_ore`, `total_inc_vat_ore` og et satsvist `vat_breakdown`. Summen av eks. MVA og MVA skal alltid være lik total inkl. MVA.
+- Ved flere MVA-satser summeres linjene først per sats og deretter til ordretotalen; det brukes ikke én global sats på hele ordren.
+
+**Admin:**
+- Butikkansatte kan se og sette MVA-sats på produktet. 25 % er forhåndsvalgt ved vanlig produktregistrering, men andre satser kan registreres.
+- Produktpriser registreres og vises som pris inkl. MVA, med beregnet pris eks. MVA tilgjengelig fra samme ørebaserte beregning.
+- Ordredetaljen viser sum eks. MVA, samlet MVA og total inkl. MVA, samt sats/MVA-beløp per ordrelinje.
+
+**Kundeside og ordrebekreftelse:**
+- Alle produkt-, handlekurv- og checkoutpriser vises inkl. MVA.
+- Ordreoppsummering og ordrebekreftelse viser minst total inkl. MVA og hvor mye MVA som inngår; MVP-en viser i tillegg sum eks. MVA.
+
+**Stripe:**
+- Stripe belastes med `total_inc_vat_ore`. Serverdelen beregner ordren på nytt fra databaseprisene, lagrer MVA-snapshot og oppretter deretter betalingssesjonen.
+- Klientens handlekurvpris eller Stripe sin beregning skal aldri brukes som fasit for MVA. Webhooken bekrefter betalt beløp mot det forventede, lagrede ordrebeløpet før ordren markeres betalt.
 
 ## 4. Data, bilder og admin (Supabase)
 
 - **Supabase Database**: produkter, priser, tekster, butikkdata, kategorier, farger og ordre lagres her – ikke i statiske filer i koden (slik dagens demo gjør med `data.js`).
+- **MVA i produkt- og ordredata**: produktet har eksplisitt MVA-sats; variantpris er inkl. MVA; ordre og ordrelinjer lagrer ørebaserte MVA-snapshots og totalsummer som definert i pkt. 3A.
 - **Supabase Storage**: produktbilder, logoer og andre opplastede bilder lagres her, **ikke** i Netlify-deployen. Dette holder selve applikasjonskoden liten og uavhengig av innhold.
 - **Bildekomprimering**: samme prinsipp som i AEMA Booking – mål om bilder rundt **~130 KB** der det gir god nok kvalitet, for å holde lagrings- og båndbreddekostnader lave.
 - **Admin uten deploy**: butikken skal kunne opprette/redigere produkter, priser, bilder og tekster gjennom adminpanelet (bygger videre på admin-demoens produktskjema) uten at det krever en ny Netlify-deploy.
+- **MVA i admin**: 25 % er standard ved produktregistrering, men kan endres. Ordredetaljer viser eks. MVA, MVA og inkl. MVA.
 - Produktdataene inkluderer også lagerstatus og forventet leveringstid (se pkt. 13) – samme prinsipp, ingen deploy for å endre dette.
 
 ## 5. Netlify og deploy-strategi
@@ -55,6 +87,7 @@ Netlify brukes primært til selve applikasjonen/frontend-koden – ikke til innh
 ## 6. Kontoer og infrastruktur i pilotfasen
 
 - **AEMAs eksisterende Supabase- og Netlify-kontoer** brukes i første omgang – det opprettes **ikke** nye hovedkontoer bare for Kulør Rognan nå.
+- For Supabase brukes e-postaliaset **`kulornettbutikk@aema.no`** ved opprettelse av konto.
 - Det opprettes **egne, tydelig navngitte prosjekter/sites** for denne løsningen på disse kontoene (f.eks. et Supabase-prosjekt og en Netlify-site med et gjenkjennbart navn som skiller det fra AEMAs øvrige prosjekter og fra andre fremtidige kunder).
 - Løsningen organiseres slik at Supabase-prosjektet og Netlify-siten **senere kan flyttes** til egne AEMA-organisasjoner/team når det blir naturlig (typisk når flere kunder kommer til), uten at det krever en ombygging av koden.
 - **Kunden eier ikke** Netlify-, Supabase- eller GitHub-infrastrukturen – dette er AEMAs driftsressurser, jf. pkt. 1 og 2.
@@ -148,10 +181,12 @@ Kulør Rognan skal ikke være begrenset til varer de fysisk har på lager i buti
 - Nettbutikken viser tydelig forventet leveringstid basert på status, f.eks. «På lager – normalt klar for henting samme dag» / «Fjernlager – forventet levering til butikk 3–7 dager»
 
 **Datamodell** (utvidelse av `product_variants` fra [nettbutikk-utviklingsplan.md](nettbutikk-utviklingsplan.md) pkt. 2):
+- `products.vat_rate_basis_points`: eksplisitt MVA-sats per produkt (`2500` = 25,00 %), jf. pkt. 3A
+- `product_variants.price_ore`: ordinær pris inkl. MVA i øre
 - `stock_status`: `på_lager` eller `fjernlager`
 - `expected_lead_time`: tekst vist til kunden (f.eks. «3–7 dager»)
 - `supplier_reference`: internt felt for leverandør/fjernlager-referanse – vises kun i admin, aldri til kunden
-- `campaign_price`: valgfri alternativ pris, for bevisst lavere margin på enkelte bestillingsvarer
+- `campaign_price_ore`: valgfri alternativ pris inkl. MVA i øre, for bevisst lavere margin på enkelte bestillingsvarer
 
 **Adminpanelet:**
 - Butikken setter lagerstatus, forventet leveringstid, ev. leverandørreferanse og kampanjepris manuelt per produkt/variant – samme skjema-mønster som dagens admin-demo, ikke en ny arbeidsflyt
